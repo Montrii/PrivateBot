@@ -3,7 +3,7 @@
 import {Task} from "../tasks/Task";
 
 export abstract class Manager {
-    abstract reportSuccessTask(task: Task, ...args: any[])
+    abstract reportSuccessfulTask(task: Task, ...args: any[])
     abstract reportUnsuccessfulTask(task: Task, ...args: any[])
 
     abstract runAllTasks();
