@@ -8,11 +8,12 @@ import "dotenv/config";
  */
 import {ConsoleManager} from "./classes/backend/ConsoleManager";
 import "./classes/backend/ErrorHandling"
-import {Localisation} from "./classes/localisation/Localisation";
 import {DockerHandler} from "./classes/docker/DockerHandler";
 
 // Managers (wrappers for all tasks requires to fulfill result)
 import {SteamManager} from "./classes/managers/steam/SteamManager";
+import {DiscordUpdater} from "./classes/managers/discord/DiscordUpdater";
+import {GuildInformer} from "./classes/backend/GuildInformer";
 
 
 // Class Hierachy
@@ -39,6 +40,11 @@ client.on("ready", (user) => {
 
 
     console.log("[BOT]: " + user.user.username + " is being initialized!");
+
+    // Feeding DiscordUpdater the client
+    DiscordUpdater.getInstance().setClient(client).setUser(user.user);
+    // Feeding the GuildInformer the client
+    GuildInformer.getInstance().setClient(client);
 
     new SteamManager().runAllTasks()
 
