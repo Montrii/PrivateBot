@@ -3,8 +3,6 @@
 name: Compile Typescript Code with Node 18 and 19
 
 on:
-  push:
-    branches: [ "github-setup" ]
   pull_request:
     branches: [ "master" ]
 
