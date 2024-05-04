@@ -11,6 +11,7 @@ import "./classes/backend/ErrorHandling"
 
 // Managers (wrappers for all tasks requires to fulfill result)
 import {SteamManager} from "./classes/managers/steam/SteamManager";
+import {EpicGamesManager} from "./classes/managers/epicgames/EpicGamesManager";
 import {DiscordUpdater} from "./classes/managers/discord/DiscordUpdater";
 import {GuildInformer} from "./classes/backend/GuildInformer";
 import {CommandRegister} from "./classes/backend/CommandRegister";
@@ -33,9 +34,9 @@ const client = new Client({
     intents: ["Guilds", "GuildMessages", "GuildMembers", "MessageContent", "DirectMessageTyping", "DirectMessageReactions", "DirectMessageReactions"]
 });
 
-client.on("ready", async (user) => {
+client.on("ready", (user) => {
 
-    console.log("[BOT]: Bot '" + user.user.username + "' is being initialized!");
+    console.log("[BOT]: " + user.user.username + " is being initialized!");
 
     // Feeding DiscordUpdater the client
     DiscordUpdater.getInstance().setClient(client).setUser(user.user);
@@ -46,6 +47,7 @@ client.on("ready", async (user) => {
     await CommandRegister.getInstance().setClient(client).registerCommands();
 
     new SteamManager().runAllTasks()
+    new EpicGamesManager().runAllTasks()
 
 })
 

@@ -131,6 +131,14 @@ dist
 
 .idea
 ./.idea
+./src/**
+dist/**
+./dist/**
+
+*.js
+!src/*.js
+/src/index.js
+
 
 
 dist/*
