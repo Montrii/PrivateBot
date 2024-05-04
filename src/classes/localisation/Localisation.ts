@@ -3,7 +3,7 @@ interface Language {
 }
 
 interface Localisation {
-    [key: string]: Language | string | ((language: string) => void);
+    [key: string]: Language | string | ((language: string) => void) | any;
     en: Language;
     de: Language;
     setLanguage: (language: string) => void;
@@ -12,36 +12,32 @@ interface Localisation {
 
 const Localisation: Localisation = {
     en: {
-        steam: {
-            title: "Game: ",
-            dlcTitle: "DLC: ",
-            description: "This game is free for a limited time!",
-            dlcDescription: "This DLC is free for a limited time!",
-            add: "Add",
-            addDLC: "Add DLC",
-            addGame: "Add (Main Game)",
-            appId: "App ID: ",
-            releaseDate: "Release Date: ",
-            untilDate: "Until: ",
-            dlcFor: "DLC for: ",
-            ageRestriction: "Age Restriction: ",
-        },
+        steamtitle: "Game: ",
+        steamdlcTitle: "DLC: ",
+        steamdescription: "This game is free for a limited time!",
+        steamdlcDescription: "This DLC is free for a limited time!",
+        steamadd: "Add",
+        steamaddDLC: "Add DLC",
+        steamaddGame: "Add (Main Game)",
+        steamappId: "App ID: ",
+        steamreleaseDate: "Release Date: ",
+        steamuntilDate: "Until: ",
+        steamdlcFor: "DLC for: ",
+        steamageRestriction: "Age Restriction: ",
     },
     de: {
-        steam: {
-            title: "Spiel ",
-            dlcTitle: "DLC: ",
-            description: "Dieses Spiel ist für eine begrenzte Zeit kostenlos!",
-            dlcDescription: "Dieses DLC ist für eine begrenzte Zeit kostenlos!",
-            add: "Hinzufügen",
-            addDLC: "DLC hinzufügen",
-            addGame: "Hinzufügen (Hauptspiel)",
-            appId: "App ID: ",
-            releaseDate: "Veröffentlichungsdatum: ",
-            untilDate: "Erhältlich bis: ",
-            dlcFor: "DLC für: ",
-            ageRestriction: "Altersbeschränkung: ",
-        },
+        steamtitle: "Spiel ",
+        steamdlcTitle: "DLC: ",
+        steamdescription: "Dieses Spiel ist für eine begrenzte Zeit kostenlos!",
+        steamdlcDescription: "Dieses DLC ist für eine begrenzte Zeit kostenlos!",
+        steamadd: "Hinzufügen",
+        steamaddDLC: "DLC hinzufügen",
+        steamaddGame: "Hinzufügen (Hauptspiel)",
+        steamappId: "App ID: ",
+        steamreleaseDate: "Veröffentlichungsdatum: ",
+        steamuntilDate: "Erhältlich bis: ",
+        steamdlcFor: "DLC für: ",
+        steamageRestriction: "Altersbeschränkung: ",
     },
     // Add translations for other languages as needed
 

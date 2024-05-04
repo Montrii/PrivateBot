@@ -20,9 +20,10 @@ export class SteamSearcherTask extends Task {
     manager: SteamManager;
 
     games: SteamGame[];
-    constructor(manager) {
+    constructor(manager: SteamManager) {
         super("SteamSearcherTask");
         this.manager = manager;
+        this.games = [];
     }
     runSteamTask(repeat: number) {
         super.runTask(repeat, async () => {
@@ -50,7 +51,7 @@ export class SteamSearcherTask extends Task {
 
                 // filter only games out of this list
                 const games = $('div[id="search_resultsRows"]')[0].children.filter((element) => {
-                    return element?.next?.name === 'a' && element?.next?.attribs.href.includes("store.steampowered.com")
+                    return (element?.next as any)?.name === 'a' && (element?.next as any)?.attribs.href.includes("store.steampowered.com")
                 }).map((element) => element.next);
 
                 // if no games could be found in this list -> none are free
@@ -65,13 +66,16 @@ export class SteamSearcherTask extends Task {
 
                 for(let i = 0; i < games.length; i++) {
                     let game = games[i];
-                    let title = $(game).find("span.title").get(0).children[0].data
-                    let link = game.attribs.href
-                    let releaseDate = new Date($(game).find("div.search_released").get(0).children[0].data)
-                    let originalPrice = $(game).find("div.discount_original_price").get(0).children[0].data
-                    let image = $(game).find("div.search_capsule").get(0).children[0].attribs.src
-                    let appId = game.attribs["data-ds-appid"]
+                    let title = ($(game!).find("span.title").get(0)!.children[0] as any).data
+                    let link = (game as any).attribs.href
+                    let releaseDate = new Date(($(game!).find("div.search_released").get(0)!.children[0] as any).data)
+                    let originalPrice = ($(game!).find("div.discount_original_price").get(0)!.children[0] as any).data
+                    let image = ($(game!).find("div.search_capsule").get(0)!.children[0] as any).attribs.src
+                    let appId = (game as any).attribs["data-ds-appid"]
                     let DLCInformation = await this.validateIfGameIsDLC(appId)
+
+                    // Ignoring this line because we use multiple constructors
+                    // @ts-ignore
                     this.games.push(new SteamGame(appId, title, releaseDate, DLCInformation.ratingIcon, image, link, DLCInformation.untilDate, originalPrice, DLCInformation.isDLC, DLCInformation.mainGame))
                 }
 
@@ -85,7 +89,7 @@ export class SteamSearcherTask extends Task {
     }
 
 
-    private async getMainGameByLink(link) : Promise<any> {
+    private async getMainGameByLink(link: string) : Promise<any> {
         return await axios.get(link).then((result) => {
 
             // If website does not return proper status code, something went wrong.
@@ -97,10 +101,10 @@ export class SteamSearcherTask extends Task {
             }
 
             const $ = cheerio.load(result.data);
-            const title = $('div[id="appHubAppName"]').get(0).children[0].data;
-            const releaseDate = new Date($('div[class="date"]').get(0).children[0].data);
-            const ratingIcon = $('div[class="game_rating_icon"]').get(0).children[0]?.next?.attribs?.src
-            const image = $('img[class="game_header_image_full"]').get(0).attribs.src;
+            const title = ($('div[id="appHubAppName"]').get(0)!.children[0] as any).data;
+            const releaseDate = new Date(($('div[class="date"]').get(0)!.children[0] as any).data);
+            const ratingIcon = ($('div[class="game_rating_icon"]').get(0)!.children[0]?.next! as any).attribs?.src
+            const image = $('img[class="game_header_image_full"]').get(0)!.attribs.src;
             const appId = link.split('/app/')[1]?.split('/')[0];
 
             return new Promise((resolve, reject) => {
@@ -111,7 +115,7 @@ export class SteamSearcherTask extends Task {
         })
     }
 
-    private async validateIfGameIsDLC(appId): Promise<object> {
+    private async validateIfGameIsDLC(appId: string): Promise<any> {
         return await axios.get("https://store.steampowered.com/app/" + appId).then(async (result) => {
 
             // Variables to return
@@ -141,11 +145,11 @@ export class SteamSearcherTask extends Task {
 
             let untilDateContainer = $('p[class="game_purchase_discount_quantity "]');
             if(untilDateContainer !== null && untilDateContainer.children.length > 0) {
-                untilDate = SteamSearcherTaskUtilties.makeUntilDateIntoDate(untilDateContainer[0].children[0].data);
+                untilDate = SteamSearcherTaskUtilties.makeUntilDateIntoDate((untilDateContainer[0].children[0] as any).data);
             }
 
-            const ratingIcon = $('div[class="game_rating_icon"]').get(0).children[0]?.next?.attribs?.src
-            mainGame = await this.getMainGameByLink($(dlcContainer).find("a").get(0).attribs.href) as SteamGame;
+            const ratingIcon = ($('div[class="game_rating_icon"]').get(0)!.children[0]?.next! as any).attribs?.src
+            mainGame = await this.getMainGameByLink($(dlcContainer).find("a").get(0)!.attribs!.href) as SteamGame;
 
             console.log("[STEAM]: Game is a DLC: " + appId + " | Main game: " + mainGame.title)
 
@@ -161,7 +165,7 @@ export class SteamSearcherTask extends Task {
 
 
 const SteamSearcherTaskUtilties = {
-    convertAMPMTimeToFullTime(time12h) {
+    convertAMPMTimeToFullTime(time12h: any) {
         let modifier = time12h[time12h.length - 5] + time12h[time12h.length - 4];
         let newtime12h = time12h.replace(modifier, "");
         let [hours, minutes] = newtime12h.split(':');
@@ -178,7 +182,7 @@ const SteamSearcherTaskUtilties = {
         hours = parseInt(hours, 10) + 9;
         return [hours, Number(minutes)];
     },
-    makeUntilDateIntoDate(untilDate)
+    makeUntilDateIntoDate(untilDate: any)
     {
         let untilDateNew = untilDate.replace("Free to keep when you get it before", "");
         let current = new Date().getFullYear();

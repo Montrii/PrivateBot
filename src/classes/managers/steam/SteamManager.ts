@@ -18,7 +18,7 @@ export class SteamManager extends Manager {
         this.steamSearcherTask.runSteamTask(10000);
     }
 
-    private reportSuccessfulTask(task: Task, ...args: any[]) {
+    public reportSuccessfulTask(task: Task, ...args: any[]) {
         // if completed task is steamSearcher, then second parameter are the found games and the third (boolean) is if it ran entirely.
         console.log("[TASK]: " + task.name + " successfully completed!")
         if(task === this.steamSearcherTask && args[1] === true) {
@@ -26,7 +26,7 @@ export class SteamManager extends Manager {
         }
     }
 
-    private reportUnsuccessfulTask(task: Task, ...args: any[]) {
+    public reportUnsuccessfulTask(task: Task, ...args: any[]) {
         console.log("Task unsuccessfully completed!")
     }
 }

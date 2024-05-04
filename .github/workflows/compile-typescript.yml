@@ -1,6 +1,6 @@
 # This workflow will compile this repository's TypeScript code and see if it is successful
 
-name: Compile Typescript Code
+name: Compile Typescript Code with Node 18 and 19
 
 on:
   push:
@@ -14,7 +14,7 @@ jobs:
     strategy:
       matrix:
         # Use one of these node versions
-        node-version: [16.x, 18.x, 19.x]
+        node-version: [18.x, 19.x]
 
 
     steps:

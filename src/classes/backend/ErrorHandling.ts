@@ -7,13 +7,13 @@
 
 
 // Sigterm handling
-process.on("SIGTERM", (error) => {
+process.on("SIGTERM", (error: Error) => {
     console.log("[SYSTEM]: SIGTERM called, terminating..")
     process.exit(error ? 1 : 0);
 })
 
 // unhandledException handling
-process.on("uncaughtException", (error) => {
+process.on("uncaughtException", (error: Error) => {
     console.log("[SYSTEM]: Uncaught Exception! Read below: ")
     if(error) {
         console.log("Message: " + error.message);
@@ -24,7 +24,7 @@ process.on("uncaughtException", (error) => {
 })
 
 // unhandledRejection handling
-process.on("unhandledRejection", (error) => {
+process.on("unhandledRejection", (error: Error) => {
     console.log("[SYSTEM]: Unhandled Rejection! Read below: ")
     if(error) {
         console.log("Message: " + error.message);
