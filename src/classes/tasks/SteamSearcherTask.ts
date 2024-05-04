@@ -25,8 +25,8 @@ export class SteamSearcherTask extends Task {
         this.manager = manager;
         this.games = [];
     }
-    runSteamTask(repeat: number) {
-        super.runTask(repeat, async () => {
+    runSteamTask() {
+        super.runTask(async () => {
             await axios.get("https://store.steampowered.com/search/?maxprice=free&specials=1").then(async (result) => {
 
 

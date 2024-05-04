@@ -22,6 +22,9 @@ export class Task {
     currentRunStarted: Date | null = null;
 
     lastRunFinished: Date | null = null;
+
+    // repeat after x seconds * 1000
+    repeatsAfter: number = 0;
     constructor(name: string) {
         console.log("[TASK]: Initializing Task: " + name + ".")
         this.state = TaskState.IDLE
@@ -31,7 +34,7 @@ export class Task {
         this.amountOfFailures = 0;
     }
 
-    runTask(repeat: number, func: (...args: any[]) => void, ...args: any[]): void {
+    runTask(func: (...args: any[]) => void, ...args: any[]): void {
         setInterval(async () => {
             // Make sure that the Task only repeats if it is finished or failed (might be temporarily an issue)
             if (this.state !== TaskState.RUNNING) {
@@ -50,9 +53,13 @@ export class Task {
                     this.amountOfRuns += 1;
                 }
             }
-        }, repeat);
+        }, this.repeatsAfter * 1000);
     }
 
+    public setRepeatsAfter(seconds: number): Task {
+        this.repeatsAfter = seconds;
+        return this;
+    }
     public toString = () : string => {
         return `Task (Name: ${this.name})`;
     }

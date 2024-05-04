@@ -19,6 +19,8 @@ export class Localisation {
             amountOfSuccessfulRuns: "Amount of successful runs: ",
             amountOfFailedRuns: "Amount of failed runs: ",
             lastErrorStack: "Last Error Stack: ",
+            repeatsAfter: "Repeats after: ",
+            seconds: "seconds",
 
             contains_all_the_tasks: "Contains all the tasks of the bot",
 
@@ -58,6 +60,8 @@ export class Localisation {
             amountOfSuccessfulRuns: "Anzahl erfolgreicher Läufe: ",
             amountOfFailedRuns: "Anzahl fehlgeschlagener Läufe: ",
             lastErrorStack: "Letzter Fehler: ",
+            repeatsAfter: "Wiederholt sich nach: ",
+            seconds: "Sekunden",
 
             contains_all_the_tasks: "Enthält alle Aufgaben des Bots",
 

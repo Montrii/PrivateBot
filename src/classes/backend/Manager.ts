@@ -14,7 +14,8 @@ export abstract class Manager {
         this.name = name;
     }
 
-    protected registerTask(task: Task): Task {
+    protected registerTask(task: Task, repeat: number): Task {
+        task.setRepeatsAfter(repeat);
         this.tasks.add(task);
         return task;
     }

@@ -26,6 +26,7 @@ function getCommands() {
                                 { name: command.localisation.get("lastSuccessfulEndedRun"), value: task.lastRunFinished?.toLocaleString(command.localisation.getLanguage()) ?? "-", inline: true },
                                 {name: command.localisation.get("amountOfSuccessfulRuns"), value: task.amountOfRuns + "", inline: true},
                                 {name: command.localisation.get("amountOfFailedRuns"), value: task.amountOfFailures + "", inline: true},
+                                {name: command.localisation.get("repeatsAfter"), value: task.repeatsAfter + " " + command.localisation.get("seconds"), inline: true},
                                 {name: command.localisation.get("lastErrorStack"), value: task.lastErrorStack?.stack ?? "-", inline: false}
                             )
                         );
