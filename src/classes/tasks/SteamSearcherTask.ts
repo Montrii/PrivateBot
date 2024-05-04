@@ -38,6 +38,8 @@ export class SteamSearcherTask extends Task {
                 this.games = [];
                 const $ = cheerio.load(result.data);
 
+                console.log("[TASK]: " + this.name + " is running!")
+
                 // If no games could be found or some error occurred while doing so.
                 if($('div[id="search_resultsRows"]')[0] === undefined || $('div[id="search_resultsRows"]')[0] === null ||
                     $('div[id="search_resultsRows"]') === undefined || $('div[id="search_resultsRows"]') === null) {

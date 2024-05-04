@@ -20,6 +20,7 @@ export class SteamManager extends Manager {
 
     private reportSuccessfulTask(task: Task, ...args: any[]) {
         // if completed task is steamSearcher, then second parameter are the found games and the third (boolean) is if it ran entirely.
+        console.log("[TASK]: " + task.name + " successfully completed!")
         if(task === this.steamSearcherTask && args[1] === true) {
             DiscordUpdater.getInstance().updateSteamGames(args[0] as SteamGame[]);
         }

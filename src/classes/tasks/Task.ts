@@ -11,13 +11,12 @@ export class Task {
     name: string
     state: TaskState
     constructor(name: string) {
-        console.log("[TASK]: Initialsing Task: " + name + ".")
+        console.log("[TASK]: Initializing Task: " + name + ".")
         this.state = TaskState.IDLE
         this.name = name;
     }
 
     runTask(repeat: number, func: (...args: any[]) => void, ...args: any[]): void {
-        console.log("[TASK]: Running Task!");
         setInterval(async () => {
             // Make sure that the Task only repeats if it is finished or failed (might be temporarily an issue)
             if (this.state !== TaskState.RUNNING) {
