@@ -2,9 +2,11 @@
   "name": "privatebot",
   "version": "1.0.0",
   "description": "A discord bot written for my personal use, published on Github",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node ."
   },
   "repository": {
     "type": "git",
@@ -23,5 +25,19 @@
   "bugs": {
     "url": "https://github.com/Montrii/PrivateBot/issues"
   },
-  "homepage": "https://github.com/Montrii/PrivateBot#readme"
+  "homepage": "https://github.com/Montrii/PrivateBot#readme",
+  "dependencies": {
+    "axios": "^1.6.8",
+    "cheerio": "^1.0.0-rc.12",
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.4.5",
+    "is-docker": "^3.0.0",
+    "octokit": "^3.2.0",
+    "puppeteer": "^22.7.1",
+    "typescript": "^5.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.7",
+    "tsx": "^4.8.2"
+  }
 }
