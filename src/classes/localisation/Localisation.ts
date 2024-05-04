@@ -7,8 +7,8 @@ export class Localisation {
         this.en = {
             steamtitle: "Game: ",
             steamdlcTitle: "DLC: ",
-            steamdescription: "This game is free for a limited time!",
-            steamdlcDescription: "This DLC is free for a limited time!",
+            steamdescription: "This game is free on Steam for a limited time!",
+            steamdlcDescription: "This DLC is free on Steam for a limited time!",
             steamadd: "Add",
             steamaddDLC: "Add DLC",
             steamaddGame: "Add (Main Game)",
@@ -24,8 +24,8 @@ export class Localisation {
         this.de = {
             steamtitle: "Spiel ",
             steamdlcTitle: "DLC: ",
-            steamdescription: "Dieses Spiel ist für eine begrenzte Zeit kostenlos!",
-            steamdlcDescription: "Dieses DLC ist für eine begrenzte Zeit kostenlos!",
+            steamdescription: "Dieses Spiel ist für eine begrenzte Zeit auf Steam kostenlos!",
+            steamdlcDescription: "Dieses DLC ist für eine begrenzte Zeit auf Steam kostenlos!",
             steamadd: "Hinzufügen",
             steamaddDLC: "DLC hinzufügen",
             steamaddGame: "Hinzufügen (Hauptspiel)",
