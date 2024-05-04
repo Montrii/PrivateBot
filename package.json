@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc",
+    "build": "tsc --module commonjs",
     "start": "node ."
   },
   "repository": {
@@ -37,7 +37,6 @@
     "typescript": "^5.4.5"
   },
   "devDependencies": {
-    "@types/node": "^20.12.7",
     "tsx": "^4.8.2"
   }
 }

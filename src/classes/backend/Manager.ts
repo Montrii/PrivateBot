@@ -3,8 +3,8 @@
 import {Task} from "../tasks/Task";
 
 export abstract class Manager {
-    abstract reportSuccessfulTask(task: Task, ...args: any[])
-    abstract reportUnsuccessfulTask(task: Task, ...args: any[])
+    abstract reportSuccessfulTask(task: Task, ...args: any[]): void
+    abstract reportUnsuccessfulTask(task: Task, ...args: any[]) : void
 
-    abstract runAllTasks();
+    abstract runAllTasks(): void;
 }

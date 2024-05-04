@@ -8,7 +8,6 @@ import "dotenv/config";
  */
 import {ConsoleManager} from "./classes/backend/ConsoleManager";
 import "./classes/backend/ErrorHandling"
-import {DockerHandler} from "./classes/docker/DockerHandler";
 
 // Managers (wrappers for all tasks requires to fulfill result)
 import {SteamManager} from "./classes/managers/steam/SteamManager";
@@ -34,10 +33,6 @@ const client = new Client({
 });
 
 client.on("ready", (user) => {
-    // If .env setting determines that the bot is required to run in Docker and it isnt, it will fail to execute.
-    if(process.env.NEEDS_DOCKER === 'true' && !DockerHandler.isInDocker())
-        throw new Error("Bot is required to run in Docker!")
-
 
     console.log("[BOT]: " + user.user.username + " is being initialized!");
 

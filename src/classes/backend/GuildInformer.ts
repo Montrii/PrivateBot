@@ -1,4 +1,5 @@
 import {Manager} from "./Manager";
+import {Collection, Guild, GuildBasedChannel, Snowflake} from "discord.js";
 
 
 // Defines the Manager for managing guilds.
@@ -26,24 +27,24 @@ export class GuildInformer {
     }
 
 
-    public getAllGuilds() {
+    public getAllGuilds(): Collection<Snowflake, Guild> {
         return this.client.guilds.cache;
     }
 
     public getGuildsWithChannelName(channelName: string) {
-        return this.client.guilds.cache.filter((guild) => {
-            return guild.channels.cache.find((channel) => channel.name === channelName)
-        }).map((guild) => {
-            guild["channelToSendTo"] = guild.channels.cache.find((channel) => channel.name === channelName)
+        return this.client.guilds.cache.filter((guild: Guild) => {
+            return guild.channels.cache.find((channel: GuildBasedChannel) => channel.name === channelName)
+        }).map((guild: any) => {
+            guild["channelToSendTo"] = guild.channels.cache.find((channel: GuildBasedChannel) => channel.name === channelName)
             return guild
         })
     }
 
-    public getGuildsWithChannelId(channelId: string) {
-        return this.client.guilds.cache.filter((guild) => {
-            return guild.channels.cache.find((channel) => channel.id === channelId)
-        }).map((guild) => {
-            guild["channelToSendTo"] = guild.channels.cache.find((channel) => channel.id === channelId)
+    public getGuildsWithChannelId(channelId: string): Guild[] {
+        return this.client.guilds.cache.filter((guild: Guild) => {
+            return guild.channels.cache.find((channel: GuildBasedChannel) => channel.id === channelId)
+        }).map((guild: any) => {
+            guild["channelToSendTo"] = guild.channels.cache.find((channel: GuildBasedChannel) => channel.id === channelId)
             return guild
         })
     }

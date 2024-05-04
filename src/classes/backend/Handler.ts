@@ -6,7 +6,7 @@
 
 
 export abstract class Handler {
-    static logDebug(text) {
+    static logDebug(text: string) {
         console.log("[" + "HANDLER" + "]: " + text)
     }
 }

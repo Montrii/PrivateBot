@@ -13,11 +13,12 @@ export class SteamGame {
     isDLC?: boolean = false
     mainGame?: SteamGame
 
+    // @ts-ignore
     constructor();
     // Constructor for main Game
     constructor(appId: string, title: string, releaseDate: Date, ratingIcon: string, image: string, link: string)
     // Constructor for DLC
-    constructor(appId, title, releaseDate, ratingIcon, image, link, untilDate, originalPrice, isDLC, mainGame) {
+    constructor(appId: string, title: string, releaseDate: Date, ratingIcon: string, image: string, link: string, untilDate: Date, originalPrice: string, isDLC: boolean, mainGame: SteamGame) {
         this.appId = appId;
         this.title = title;
         this.releaseDate = releaseDate;
