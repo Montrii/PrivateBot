@@ -1,0 +1,27 @@
+# This workflow will compile this repository's TypeScript code and see if it is successful
+
+name: Compile Typescript Code
+
+on:
+  push:
+    branches: [ "github-setup" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # Use one of these node versions
+        node-version: [16.x, 18.x, 19.x]
+
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      - run: npm ci && npm run build --if-present && npm test
