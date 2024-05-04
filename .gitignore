@@ -131,6 +131,11 @@ dist
 
 .idea
 ./.idea
-./src/**
-src/*
-src/**
+
+
+dist/*
+dist/**
+
+*.js
+!dist/*.json
+
