@@ -45,12 +45,13 @@ export class DiscordUpdater {
     public async updateSteamGames(games: SteamGame[]) {
         const guildInformer = GuildInformer.getInstance();
         const steamSettings = SteamSettings.getSteamDiscordEmbedSettings();
+        const localisation = new Localisation();
 
         // Loop through each guild that the bot is part of that has the channel name that the bot is supposed to send to.
         // @ts-ignore
         guildInformer.getGuildsWithChannelName(steamSettings.channelToSend).forEach((guild: any) => {
             // Adjust the language of the bot to the preferred language of the guild.
-            Localisation.setLanguage(guild.preferredLocale)
+            localisation.setLanguage(guild.preferredLocale)
 
             // Now we can scan of any messages we have sent and verify if we need to update them.
             guild.channelToSendTo.messages.fetch({limit: 100})
@@ -95,14 +96,14 @@ export class DiscordUpdater {
                             })
                             // If we did not find the current game, we need to add it.
                             if (!gameMessage) {
-                                this.addSteamGameToChannel(guild, steamSettings, game)
+                                this.addSteamGameToChannel(guild, steamSettings, game, localisation)
                                 console.log("[DISCORD]: Adding message for game: " + game.title + "\n appId: " + game.appId + "| guild: " + guild.name)
                             }
                         })
                     }
                     else {
                         games.forEach((game) => {
-                            this.addSteamGameToChannel(guild, steamSettings, game)
+                            this.addSteamGameToChannel(guild, steamSettings, game, localisation)
                             console.log("[DISCORD]: Adding message for game: " + game.title + "\n appId: " + game.appId + "| guild: " + guild.name)
                         })
                     }
@@ -118,11 +119,11 @@ export class DiscordUpdater {
         })
     }
 
-    private async buildSteamGameEmbed(guild: any, steamSettings: any, game: SteamGame) {
+    private async buildSteamGameEmbed(guild: any, steamSettings: any, game: SteamGame, localisation: Localisation) {
         let gameButton = new ButtonBuilder()
             .setStyle(ButtonStyle.Link)
             .setURL(game.link!)
-            .setLabel(Localisation.steamadd as string)
+            .setLabel(localisation.get("steamadd") as string)
 
         let gameMainButton;
 
@@ -131,33 +132,33 @@ export class DiscordUpdater {
         const gameEmbed = new EmbedBuilder()
             .setColor(steamSettings.color)
             .setThumbnail(game.image!)
-            .setTitle(Localisation.steamtitle + game.title!)
+            .setTitle(localisation.get("steamtitle") + game.title!)
             .setURL(game.link!)
-            .setDescription(Localisation.steamdescription as string)
+            .setDescription(localisation.get("steamdescription") as string)
 
-        gameEmbed.addFields(({ name: Localisation.steamappId, value: game.appId, inline: true } as any))
-        gameEmbed.addFields(({ name: Localisation.steamreleaseDate, value: game.releaseDate?.toLocaleString(guild.preferredLocale), inline: false } as any))
-        gameEmbed.addFields( ({ name: Localisation.steamuntilDate, value: game.untilDate?.toLocaleString(guild.preferredLocale), inline: false} as any))
+        gameEmbed.addFields(({ name: localisation.get("steamappId"), value: game.appId, inline: true } as any))
+        gameEmbed.addFields(({ name: localisation.get("steamreleaseDate"), value: game.releaseDate?.toLocaleString(guild.preferredLocale), inline: false } as any))
+        gameEmbed.addFields( ({ name: localisation.get("steamuntilDate"), value: game.untilDate?.toLocaleString(guild.preferredLocale), inline: false} as any))
 
         if(game.isDLC) {
             gameEmbed
-                .setTitle(Localisation.steamdlcTitle + game.title!)
+                .setTitle(localisation.get("steamdlcTitle") + game.title!)
                 .setColor(steamSettings.dlcColor as any)
-                .setDescription(Localisation.steamdlcDescription as string)
+                .setDescription(localisation.get("steamdlcDescription") as string)
 
-            gameButton.setLabel(Localisation.steamaddDLC as string)
-            gameMainButton = new ButtonBuilder().setStyle(ButtonStyle.Link).setURL(game.mainGame!.link as string).setLabel(Localisation.steamaddGame as string)
-            gameEmbed.addFields( ({ name: Localisation.steamdlcFor, value: game.mainGame!.title, inline: false} as any))
+            gameButton.setLabel(localisation.get("steamaddDLC") as string)
+            gameMainButton = new ButtonBuilder().setStyle(ButtonStyle.Link).setURL(game.mainGame!.link as string).setLabel(localisation.get("steamaddGame") as string)
+            gameEmbed.addFields( ({ name: localisation.get("steamdlcFor"), value: game.mainGame!.title, inline: false} as any))
         }
         return {embeds: [gameEmbed], components: [actionRow.addComponents((gameButton as any), gameMainButton)]}
     }
 
-    private async updateSteamGameInChannel(message: any, guild: any, steamSettings: any, game: SteamGame) {
-        const components = await this.buildSteamGameEmbed(guild, steamSettings, game)
+    private async updateSteamGameInChannel(message: any, guild: any, steamSettings: any, game: SteamGame, localisation: Localisation) {
+        const components = await this.buildSteamGameEmbed(guild, steamSettings, game, localisation)
         await message.edit(components)
     }
-    private async addSteamGameToChannel(guild: any, steamSettings: any, game: SteamGame) {
-        const components = await this.buildSteamGameEmbed(guild, steamSettings, game)
+    private async addSteamGameToChannel(guild: any, steamSettings: any, game: SteamGame, localisation: Localisation) {
+        const components = await this.buildSteamGameEmbed(guild, steamSettings, game, localisation)
         guild.channelToSendTo.send(components)
     }
 }

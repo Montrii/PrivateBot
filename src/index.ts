@@ -13,6 +13,7 @@ import "./classes/backend/ErrorHandling"
 import {SteamManager} from "./classes/managers/steam/SteamManager";
 import {DiscordUpdater} from "./classes/managers/discord/DiscordUpdater";
 import {GuildInformer} from "./classes/backend/GuildInformer";
+import {CommandRegister} from "./classes/backend/CommandRegister";
 
 
 // Class Hierachy
@@ -32,14 +33,17 @@ const client = new Client({
     intents: ["Guilds", "GuildMessages", "GuildMembers", "MessageContent", "DirectMessageTyping", "DirectMessageReactions", "DirectMessageReactions"]
 });
 
-client.on("ready", (user) => {
+client.on("ready", async (user) => {
 
-    console.log("[BOT]: " + user.user.username + " is being initialized!");
+    console.log("[BOT]: Bot '" + user.user.username + "' is being initialized!");
 
     // Feeding DiscordUpdater the client
     DiscordUpdater.getInstance().setClient(client).setUser(user.user);
     // Feeding the GuildInformer the client
     GuildInformer.getInstance().setClient(client);
+
+    // Registering all commands
+    await CommandRegister.getInstance().setClient(client).registerCommands();
 
     new SteamManager().runAllTasks()
 
