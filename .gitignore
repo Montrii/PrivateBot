@@ -137,5 +137,5 @@ dist/*
 dist/**
 
 *.js
-!dist/*.json
+!dist/*.js
 
