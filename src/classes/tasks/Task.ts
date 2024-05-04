@@ -13,13 +13,22 @@ export class Task {
 
     state: TaskState
 
-    currentRunStarted: Date = new Date();
+    lastError?: Error | null = null;
 
-    lastRunFinished: Date = new Date();
+    amountOfRuns: number = 0;
+
+    amountOfFailures: number = 0;
+
+    currentRunStarted: Date | null = null;
+
+    lastRunFinished: Date | null = null;
     constructor(name: string) {
         console.log("[TASK]: Initializing Task: " + name + ".")
         this.state = TaskState.IDLE
         this.name = name;
+        this.lastError = null;
+        this.amountOfRuns = 0;
+        this.amountOfFailures = 0;
     }
 
     runTask(repeat: number, func: (...args: any[]) => void, ...args: any[]): void {
@@ -30,12 +39,15 @@ export class Task {
                 try {
                     this.currentRunStarted = new Date();
                     await func(...args); // Call func with provided arguments
-                } catch (error) {
+                } catch (error: Error) {
                     console.error("Error occurred during task execution:", error);
                     this.state = TaskState.FAILED;
+                    this.lastError = error;
+                    this.amountOfFailures += 1;
                 } finally {
                     this.state = TaskState.FINISHED;
                     this.lastRunFinished = new Date();
+                    this.amountOfRuns += 1;
                 }
             }
         }, repeat);

@@ -22,8 +22,11 @@ function getCommands() {
                             .setDescription(command.localisation.get(task.name))
                             .addFields(
                                 { name: command.localisation.get("currentStatus"), value: task.state, inline: true },
-                                { name: command.localisation.get("currentStartedRun"), value: task.currentRunStarted.toLocaleString(command.localisation.getLanguage()), inline: true },
-                                { name: command.localisation.get("lastSuccessfulEndedRun"), value: task.lastRunFinished.toLocaleString(command.localisation.getLanguage()), inline: true },
+                                { name: command.localisation.get("currentStartedRun"), value: task.currentRunStarted?.toLocaleString(command.localisation.getLanguage()) ?? "-", inline: true },
+                                { name: command.localisation.get("lastSuccessfulEndedRun"), value: task.lastRunFinished?.toLocaleString(command.localisation.getLanguage()) ?? "-", inline: true },
+                                {name: command.localisation.get("amountOfSuccessfulRuns"), value: task.amountOfRuns + "", inline: true},
+                                {name: command.localisation.get("amountOfFailedRuns"), value: task.amountOfFailures + "", inline: true},
+                                {name: command.localisation.get("lastErrorStack"), value: task.lastErrorStack?.stack ?? "-", inline: false}
                             )
                         );
                     });

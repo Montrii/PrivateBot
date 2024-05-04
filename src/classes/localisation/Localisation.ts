@@ -16,6 +16,10 @@ export class Localisation {
             lastSuccessfulEndedRun: "Last successful Run: ",
             currentStartedRun: "Current Run started: ",
 
+            amountOfSuccessfulRuns: "Amount of successful runs: ",
+            amountOfFailedRuns: "Amount of failed runs: ",
+            lastErrorStack: "Last Error Stack: ",
+
             contains_all_the_tasks: "Contains all the tasks of the bot",
 
             // Task descriptions
@@ -50,6 +54,10 @@ export class Localisation {
             currentStatus: "Momentaner Status: ",
             lastSuccessfulEndedRun: "Letzter erfolgreicher Lauf: ",
             currentStartedRun: "Aktueller Lauf: ",
+
+            amountOfSuccessfulRuns: "Anzahl erfolgreicher Läufe: ",
+            amountOfFailedRuns: "Anzahl fehlgeschlagener Läufe: ",
+            lastErrorStack: "Letzter Fehler: ",
 
             contains_all_the_tasks: "Enthält alle Aufgaben des Bots",
 
