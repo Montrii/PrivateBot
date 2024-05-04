@@ -35,7 +35,7 @@ const client = new Client({
 
 client.on("ready", async (user) => {
 
-    console.log("[BOT]: " + user.user.username + " is being initialized!");
+    console.log("[BOT]: Bot '" + user.user.username + "' is being initialized!");
 
     // Feeding DiscordUpdater the client
     DiscordUpdater.getInstance().setClient(client).setUser(user.user);

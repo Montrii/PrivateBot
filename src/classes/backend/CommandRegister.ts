@@ -47,12 +47,16 @@ export class CommandRegister {
         }
 
         const commands = this.loadCommands()
+        if(commands.length <= 0) {
+            console.error("[COMMAND-REGISTRATION]: No commands found. Exiting command registration.")
+            return;
+        }
 
         const rest = new REST({ version: '10' }).setToken((process.env.TOKEN as string))
         await (async () => {
             try {
                 console.log("[COMMAND-REGISTRATION]: Started registering commands.")
-                const promises = [];
+                const promises: Promise<any>[] = [];
                 GuildInformer.getInstance().getAllGuilds().forEach(async (guild) => {
                     // Get all the commands that are for this guild
                     const guildCommands = commands.filter((command) => command.isForAllGuilds() || command.specifcGuildId() === guild.id);
@@ -61,7 +65,7 @@ export class CommandRegister {
                     // Put the commands in the right format for registering
                     const formattedCommands = guildCommands.map((command) => ({
                         name: command.getName(),
-                        description: command.getDescription(),
+                        description: command.adjustCommandForGuild(guild).getDescription(),
                     }));
 
                     // Make promises to register the commands
@@ -76,12 +80,12 @@ export class CommandRegister {
                 // Register all the commands
                 try {
                     // Run all promises
-                    await Promise.all(promises);
+                    await Promise.all((promises as Promise<any>[]));
                     // Once all commands are registered, launch the interactionCreate event and check if the command got called
                     this.client.on("interactionCreate", this.handleInteractionCreateEvent);
 
                     console.log("[COMMAND-REGISTRATION]: Successfully registered commands.");
-                } catch (error) {
+                } catch (error: any) {
                     console.error("[COMMAND-REGISTRATION]: Error occurred while registering commands: " + error.message);
                 }
 
