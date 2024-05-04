@@ -2,7 +2,7 @@
 
 import {ChatInputCommandInteraction, Guild, REST} from "discord.js"
 import {Command} from "./commands/Command";
-import commands from "./commands/CommandStorage";
+import getCommands from "./commands/CommandStorage";
 import {GuildInformer} from "./GuildInformer";
 
 const { Routes } = require("discord.js")
@@ -35,7 +35,7 @@ export class CommandRegister {
     }
 
     private loadCommands(): Command[] {
-        this.commands = commands;
+        this.commands = getCommands();
         return this.commands;
     }
 
@@ -57,13 +57,12 @@ export class CommandRegister {
             try {
                 console.log("[COMMAND-REGISTRATION]: Started registering commands.")
                 const promises: Promise<any>[] = [];
-                GuildInformer.getInstance().getAllGuilds().forEach(async (guild) => {
+                GuildInformer.getInstance().getGuildsWithTheirCommands(commands).forEach(async (guild) => {
                     // Get all the commands that are for this guild
-                    const guildCommands = commands.filter((command) => command.isForAllGuilds() || command.specifcGuildId() === guild.id);
-                    console.log("[COMMAND-REGISTRATION]: Registering " + guildCommands.length + " commands for guild " + guild.name);
+                    console.log("[COMMAND-REGISTRATION]: Registering " + guild.botCommands.length + " commands for guild " + guild.name);
 
                     // Put the commands in the right format for registering
-                    const formattedCommands = guildCommands.map((command) => ({
+                    const formattedCommands = guild.botCommands.map((command: Command) => ({
                         name: command.getName(),
                         description: command.adjustCommandForGuild(guild).getDescription(),
                     }));
@@ -100,14 +99,14 @@ export class CommandRegister {
         if (!interaction.isChatInputCommand()) return;
 
         // if interaction is chatInputCommand, then find the command and call the callback
-        const command = commands.find((command: Command) => command.getName() === interaction.commandName);
+        const command = interaction.guild.botCommands!.find((command: Command) => command.getName() === interaction.commandName);
         if(!command) {
             console.error("[COMMAND-REGISTRATION]: Command not found: " + interaction.commandName)
             return;
         }
 
         // Call interaction callback
-        command.callInteractionCallback(interaction);
+        command.callInteractionCallback(interaction, command);
     }
 
 }

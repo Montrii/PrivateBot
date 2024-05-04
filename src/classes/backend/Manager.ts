@@ -3,10 +3,20 @@
 import {Task} from "../tasks/Task";
 
 export abstract class Manager {
+    public name: string = "Manager";
+
     // Static instances for all managers
     static instances: Set<Manager> = new Set();
-    protected constructor() {
+
+    tasks: Set<Task> = new Set();
+    protected constructor(name: string) {
         Manager.instances.add(this);
+        this.name = name;
+    }
+
+    protected registerTask(task: Task): Task {
+        this.tasks.add(task);
+        return task;
     }
     abstract reportSuccessfulTask(task: Task, ...args: any[]): void
     abstract reportUnsuccessfulTask(task: Task, ...args: any[]) : void

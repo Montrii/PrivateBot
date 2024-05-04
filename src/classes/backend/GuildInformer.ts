@@ -1,5 +1,7 @@
 import {Manager} from "./Manager";
 import {Collection, Guild, GuildBasedChannel, Snowflake} from "discord.js";
+import {Command} from "./commands/Command";
+import * as _ from 'lodash';
 
 
 // Defines the Manager for managing guilds.
@@ -31,8 +33,16 @@ export class GuildInformer {
         return this.client.guilds.cache;
     }
 
+    public getGuildsWithTheirCommands(commands: Command[]) {
+        return this.getAllGuilds().map((guild: any) => {
+            // We need to make sure we clone the commands so we have a fresh copy for each guild.
+            guild["botCommands"] = commands.map(command => _.cloneDeep(command)).filter((command: Command) => command.isForAllGuilds() || command.specifcGuildId() === guild.id)
+            return guild
+        });
+    }
+
     public getGuildsWithChannelName(channelName: string) {
-        return this.client.guilds.cache.filter((guild: Guild) => {
+        return this.getAllGuilds().filter((guild: Guild) => {
             return guild.channels.cache.find((channel: GuildBasedChannel) => channel.name === channelName)
         }).map((guild: any) => {
             guild["channelToSendTo"] = guild.channels.cache.find((channel: GuildBasedChannel) => channel.name === channelName)
@@ -41,7 +51,7 @@ export class GuildInformer {
     }
 
     public getGuildsWithChannelId(channelId: string): Guild[] {
-        return this.client.guilds.cache.filter((guild: Guild) => {
+        return this.getAllGuilds().filter((guild: Guild) => {
             return guild.channels.cache.find((channel: GuildBasedChannel) => channel.id === channelId)
         }).map((guild: any) => {
             guild["channelToSendTo"] = guild.channels.cache.find((channel: GuildBasedChannel) => channel.id === channelId)

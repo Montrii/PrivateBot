@@ -9,7 +9,13 @@ import {TaskState} from "./TaskState";
 export class Task {
 
     name: string
+
+
     state: TaskState
+
+    currentRunStarted: Date = new Date();
+
+    lastRunFinished: Date = new Date();
     constructor(name: string) {
         console.log("[TASK]: Initializing Task: " + name + ".")
         this.state = TaskState.IDLE
@@ -22,12 +28,14 @@ export class Task {
             if (this.state !== TaskState.RUNNING) {
                 this.state = TaskState.RUNNING;
                 try {
+                    this.currentRunStarted = new Date();
                     await func(...args); // Call func with provided arguments
                 } catch (error) {
                     console.error("Error occurred during task execution:", error);
                     this.state = TaskState.FAILED;
                 } finally {
                     this.state = TaskState.FINISHED;
+                    this.lastRunFinished = new Date();
                 }
             }
         }, repeat);

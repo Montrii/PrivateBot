@@ -34,7 +34,7 @@ const client = new Client({
     intents: ["Guilds", "GuildMessages", "GuildMembers", "MessageContent", "DirectMessageTyping", "DirectMessageReactions", "DirectMessageReactions"]
 });
 
-client.on("ready", (user) => {
+client.on("ready", async (user) => {
 
     console.log("[BOT]: " + user.user.username + " is being initialized!");
 

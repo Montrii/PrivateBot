@@ -19,13 +19,15 @@ export class Command {
     // if allGuilds is false, then this is the guild id
     private onlyForThisGuild: string = "";
 
+    // Should the command return feedback only for the user
+    private onlyForUser: boolean = false;
+
     // Callback function when command is called
 
-    private interactionCallback: any = ((interaction: ChatInputCommandInteraction) => {console.log("Command: " + this.name + " called" + interaction)})
+    private interactionCallback: any = ((interaction: ChatInputCommandInteraction, command: Command) => {console.log("Command: " + this.name + " called" + interaction)})
 
     // Commands own localisation
-    private localisation: Localisation;
-
+    public localisation: Localisation;
 
     constructor(name: string, descriptionKey: string)
     {
@@ -63,6 +65,15 @@ export class Command {
         return this;
     }
 
+    public setOnlyForUser() {
+        this.onlyForUser = true;
+        return this;
+    }
+
+    public isOnlyForUser(): boolean {
+        return this.onlyForUser;
+    }
+
     public getName(): string {
         return this.name;
     }
@@ -83,7 +94,7 @@ export class Command {
         return this.interactionCallback;
     }
 
-    public callInteractionCallback(interaction: ChatInputCommandInteraction) {
-        this.interactionCallback(interaction);
+    public callInteractionCallback(interaction: ChatInputCommandInteraction, command: Command) {
+        this.interactionCallback(interaction, command);
     }
 }
