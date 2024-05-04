@@ -13,6 +13,7 @@ import "./classes/backend/ErrorHandling"
 import {SteamManager} from "./classes/managers/steam/SteamManager";
 import {DiscordUpdater} from "./classes/managers/discord/DiscordUpdater";
 import {GuildInformer} from "./classes/backend/GuildInformer";
+import {EpicGamesManager} from "./classes/managers/epicgames/EpicGamesManager";
 
 
 // Class Hierachy
@@ -42,6 +43,7 @@ client.on("ready", (user) => {
     GuildInformer.getInstance().setClient(client);
 
     new SteamManager().runAllTasks()
+    new EpicGamesManager().runAllTasks()
 
 })
 
