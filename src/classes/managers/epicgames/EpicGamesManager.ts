@@ -5,7 +5,7 @@ import {Task} from "../../tasks/Task";
 
 export class EpicGamesManager extends Manager {
     constructor() {
-        super();
+        super("EpicGamesManager");
     }
     runAllTasks() {
     }

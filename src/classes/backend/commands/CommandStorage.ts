@@ -9,9 +9,9 @@ function getCommands() {
     return [
         new Command("viewTasks", "commandViewTasksDescription")
             .setOnlyForUser()
-            .setInteractionCallback((interaction, command) => {
+            .setInteractionCallback((interaction: ChatInputCommandInteraction, command: Command) => {
                 const managers = Manager.instances;
-                let embeds = [];
+                let embeds: any[] = [];
 
                 managers.forEach((manager) => {
                     manager.tasks.forEach((task) => {
@@ -27,6 +27,7 @@ function getCommands() {
                                 {name: command.localisation.get("amountOfSuccessfulRuns"), value: task.amountOfRuns + "", inline: true},
                                 {name: command.localisation.get("amountOfFailedRuns"), value: task.amountOfFailures + "", inline: true},
                                 {name: command.localisation.get("repeatsAfter"), value: task.repeatsAfter + " " + command.localisation.get("seconds"), inline: true},
+                                // @ts-ignore
                                 {name: command.localisation.get("lastErrorStack"), value: task.lastErrorStack?.stack ?? "-", inline: false}
                             )
                         );

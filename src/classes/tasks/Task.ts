@@ -42,7 +42,7 @@ export class Task {
                 try {
                     this.currentRunStarted = new Date();
                     await func(...args); // Call func with provided arguments
-                } catch (error: Error) {
+                } catch (error: any) {
                     console.error("Error occurred during task execution:", error);
                     this.state = TaskState.FAILED;
                     this.lastError = error;

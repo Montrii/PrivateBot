@@ -99,7 +99,8 @@ export class CommandRegister {
         if (!interaction.isChatInputCommand()) return;
 
         // if interaction is chatInputCommand, then find the command and call the callback
-        const command = interaction.guild.botCommands!.find((command: Command) => command.getName() === interaction.commandName);
+        // @ts-ignore
+        const command = interaction.guild!.botCommands!.find((command: Command) => command.getName() === interaction.commandName);
         if(!command) {
             console.error("[COMMAND-REGISTRATION]: Command not found: " + interaction.commandName)
             return;
