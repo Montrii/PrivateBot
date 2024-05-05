@@ -26,6 +26,7 @@ export class Localisation {
 
             // Task descriptions
             SteamSearcherTask: "Searches the internet for free games on Steam.\n Also gives information about the game (like if it is a DLC or not).",
+            EpicGamesSearcherTask: "Searches the internet for free games on Epic Games.\n Also gives information about the game (like if it is a DLC or not).",
 
             steamtitle: "Game: ",
             steamdlcTitle: "DLC: ",
@@ -67,6 +68,7 @@ export class Localisation {
 
             // Task descriptions
             SteamSearcherTask: "Sucht im Internet nach kostenlosen Spielen auf Steam.\n Gibt auch Informationen preis über das Spiel (z.B. ob das Spiel ein DLC ist oder nicht).",
+            EpicGamesSearcherTask: "Sucht im Internet nach kostenlosen Spielen auf Epic Games.\n Gibt auch Informationen preis über das Spiel (z.B. ob das Spiel ein DLC ist oder nicht).",
 
 
             steamtitle: "Spiel ",
@@ -103,6 +105,6 @@ export class Localisation {
 
     // Define dynamic getters
     public get(key: string): string {
-        return (this as any)[this._currentLanguage][key] || this.en[key];
+        return ((this as any)[this._currentLanguage][key] || this.en[key]) ?? "Placeholder";
     }
 }
