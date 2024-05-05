@@ -34,26 +34,42 @@ export class Task {
         this.amountOfFailures = 0;
     }
 
-    runTask(func: (...args: any[]) => void, ...args: any[]): void {
-        setInterval(async () => {
-            // Make sure that the Task only repeats if it is finished or failed (might be temporarily an issue)
-            if (this.state !== TaskState.RUNNING) {
-                this.state = TaskState.RUNNING;
-                try {
-                    this.currentRunStarted = new Date();
-                    await func(...args); // Call func with provided arguments
-                } catch (error: any) {
-                    console.error("Error occurred during task execution:", error);
-                    this.state = TaskState.FAILED;
-                    this.lastError = error;
-                    this.amountOfFailures += 1;
-                } finally {
-                    this.state = TaskState.FINISHED;
-                    this.lastRunFinished = new Date();
-                    this.amountOfRuns += 1;
+    async runTask(func: (...args: any[]) => void, ...args: any[]): Promise<void> {
+        // Starts the task on the first time immediately and then repeats after x seconds.
+        try {
+            this.state = TaskState.RUNNING;
+            this.currentRunStarted = new Date();
+            await func(...args); // Call func with provided arguments
+            this.state = TaskState.FINISHED;
+            this.lastRunFinished = new Date();
+            this.amountOfRuns += 1;
+        }
+        catch(error: any) {
+            console.error("Error occurred during task execution:", error);
+            this.state = TaskState.FAILED;
+            this.lastError = error;
+            this.amountOfFailures += 1;
+        } finally {
+            setInterval(async () => {
+                // Make sure that the Task only repeats if it is finished or failed (might be temporarily an issue)
+                if (this.state !== TaskState.RUNNING) {
+                    this.state = TaskState.RUNNING;
+                    try {
+                        this.currentRunStarted = new Date();
+                        await func(...args); // Call func with provided arguments
+                    } catch (error: any) {
+                        console.error("Error occurred during task execution:", error);
+                        this.state = TaskState.FAILED;
+                        this.lastError = error;
+                        this.amountOfFailures += 1;
+                    } finally {
+                        this.state = TaskState.FINISHED;
+                        this.lastRunFinished = new Date();
+                        this.amountOfRuns += 1;
+                    }
                 }
-            }
-        }, this.repeatsAfter * 1000);
+            }, this.repeatsAfter * 1000);
+        }
     }
 
     public setRepeatsAfter(seconds: number): Task {

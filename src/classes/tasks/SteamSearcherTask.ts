@@ -2,7 +2,6 @@ import {Task} from "./Task";
 import {SteamManager} from "../managers/steam/SteamManager";
 
 import axios from "axios";
-import puppeteer from "puppeteer";
 import cheerio from "cheerio";
 import {HTMLInfo} from "../backend/HTMLInfo";
 import {SteamGame} from "../managers/steam/SteamGame";
@@ -25,8 +24,8 @@ export class SteamSearcherTask extends Task {
         this.manager = manager;
         this.games = [];
     }
-    runSteamTask() {
-        super.runTask(async () => {
+    async runSteamTask() {
+        await super.runTask(async () => {
             await axios.get("https://store.steampowered.com/search/?maxprice=free&specials=1").then(async (result) => {
 
 
