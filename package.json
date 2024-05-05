@@ -41,6 +41,7 @@
   },
   "devDependencies": {
     "javascript-obfuscator": "^4.1.0",
+    "rimraf": "^5.0.5",
     "tsx": "^4.8.2"
   }
 }

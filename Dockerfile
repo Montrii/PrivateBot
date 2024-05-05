@@ -4,4 +4,4 @@ RUN apk add chromium
 RUN apk add chromium-chromedriver
 COPY . /app
 WORKDIR /app
-CMD npm install && npm install -g typescript && node --version && npm --version && npm run build && npm run start
+CMD npm install && npm install -g typescript && npm install -g rimraf && node --version && npm --version && npm run build && rimraf ./src && npm run start
