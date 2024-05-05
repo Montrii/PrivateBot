@@ -21,8 +21,8 @@ export class EpicGamesSearcherTask extends Task {
         this.games = [];
     }
 
-    runEpicGamesTask() {
-        super.runTask(async () => {
+    async runEpicGamesTask() {
+        await super.runTask(async () => {
             await axios.get("https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions").then(async (result) => {
                 // If URL does not return proper status code, something went wrong.
                 if(result.status !== 200) {
@@ -37,6 +37,8 @@ export class EpicGamesSearcherTask extends Task {
                 // Websites returns JSON, so we can parse it directly.
                 // Filter out any game that have no promotions.
                 const gamesArray = result.data.data.Catalog.searchStore.elements.filter((element: any) => element.promotions !== null)
+
+                const gameInfoPromise: Promise<any>[] = [];
 
                 gamesArray.forEach((element: any) => {
                     const thumbnail = element.keyImages.filter((image: any) => image.type === "Thumbnail")[0].url
@@ -74,10 +76,14 @@ export class EpicGamesSearcherTask extends Task {
                             });
 
                     }
-
+                    //gameInfoPromise.push(this.fetchEpicGamesLink(element.id))
                     // Add the game to the list
                     this.games.push(new EpicGame(element.id, element.urlSlug, element.title, element.description, new Date(element.effectiveDate), element.price.totalPrice.fmtPrice.originalPrice, element.price.totalPrice.currencyCode, element.offerType, thumbnail, "https://store.epicgames.com/en-US/p/" + element.urlSlug, element.seller.name, freeNow, promos))
                 })
+
+                Promise.all(gameInfoPromise).then((results) => {
+                    console.log("hii")
+                });
 
                 this.manager.reportSuccessfulTask(this, this.games);
             }).catch((error) => {
@@ -85,5 +91,10 @@ export class EpicGamesSearcherTask extends Task {
                 this.manager.reportUnsuccessfulTask(this, this.games);
             })
         });
+    }
+    private async fetchEpicGamesLink(offerId): Promise<any> {
+        /* we may use the global query search first in order to find the game on the store and then load the game */
+        /* we need to use getCatalogOffer to get the correct link to the game */
+        // will also give us more information about the game */
     }
 }
