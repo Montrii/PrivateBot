@@ -38,8 +38,6 @@ export class EpicGamesSearcherTask extends Task {
                 // Filter out any game that have no promotions.
                 const gamesArray = result.data.data.Catalog.searchStore.elements.filter((element: any) => element.promotions !== null)
 
-                const gameInfoPromise: Promise<any>[] = [];
-
                 gamesArray.forEach((element: any) => {
                     const thumbnail = element.keyImages.filter((image: any) => image.type === "Thumbnail")[0].url
 
@@ -76,15 +74,25 @@ export class EpicGamesSearcherTask extends Task {
                             });
 
                     }
+
+
+                    // Determing what slug to use for the game
+                    let slug: string;
+
+                    if (element.offerMappings?.length) {
+                        const offerMappingWithOfferPageType = element.offerMappings.find(mapping => mapping.pageType === 'offer');
+                        slug = offerMappingWithOfferPageType ? offerMappingWithOfferPageType.pageSlug : element.offerMappings[0].pageSlug;
+                    } else if (element.catalogNs.mappings?.length) {
+                        slug = element.catalogNs.mappings[0].pageSlug;
+                    } else {
+                        slug = element.urlSlug || element.productSlug || "";
+                    }
+
                     //gameInfoPromise.push(this.fetchEpicGamesLink(element.id))
                     // Add the game to the list
-                    this.games.push(new EpicGame(element.id, element.urlSlug, element.title, element.description, new Date(element.effectiveDate), element.price.totalPrice.fmtPrice.originalPrice, element.price.totalPrice.currencyCode, element.offerType, thumbnail, "https://store.epicgames.com/en-US/p/" + element.urlSlug, element.seller.name, freeNow, promos))
+                    this.games.push(new EpicGame(element.id, element.urlSlug, element.title, element.description, new Date(element.effectiveDate), element.price.totalPrice.fmtPrice.originalPrice, element.price.totalPrice.currencyCode, element.offerType, thumbnail, "https://store.epicgames.com/en-US/p/" + slug, element.seller.name, freeNow, promos))
                 })
-
-                Promise.all(gameInfoPromise).then((results) => {
-                    console.log("hii")
-                });
-
+                console.log(this.games)
                 this.manager.reportSuccessfulTask(this, this.games);
             }).catch((error) => {
                 console.error("[TASK]: " + this.name + " failed! Down below: " + error.message + " \n" + error.stack)
@@ -92,9 +100,9 @@ export class EpicGamesSearcherTask extends Task {
             })
         });
     }
+    /*
     private async fetchEpicGamesLink(offerId): Promise<any> {
         /* we may use the global query search first in order to find the game on the store and then load the game */
         /* we need to use getCatalogOffer to get the correct link to the game */
-        // will also give us more information about the game */
-    }
+        // will also give us more information about the game
 }
