@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc --module commonjs",
-    "start": "node ."
+    "start": "javascript-obfuscator ./dist --compact true --self-defending false --output ./dist && node ."
   },
   "repository": {
     "type": "git",
@@ -39,6 +39,7 @@
     "typescript": "^5.4.5"
   },
   "devDependencies": {
+    "javascript-obfuscator": "^4.1.0",
     "tsx": "^4.8.2"
   }
 }

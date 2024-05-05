@@ -18,6 +18,7 @@ export class EpicGamesSearcherTask extends Task {
     constructor(manager: EpicGamesManager) {
         super("EpicGamesSearcherTask");
         this.manager = manager;
+        this.games = [];
     }
 
     runEpicGamesTask() {
@@ -51,15 +52,12 @@ export class EpicGamesSearcherTask extends Task {
 
                         // Receive the next promo for the game
                         promos = element.promotions.upcomingPromotionalOffers
-                            .flatMap(offer => offer.promotionalOffers)
-                            .filter(promo => {
-                                const startDate = new Date(promo.startDate);
-                                return startDate > new Date();
+                            .flatMap((offer: any) => offer.promotionalOffers)
+                            .filter((promo: any) => {
+                                return new Date(promo.startDate) > new Date();
                             })
-                            .sort((promo1, promo2) => {
-                                const startDate1 = new Date(promo1.startDate);
-                                const startDate2 = new Date(promo2.startDate);
-                                return startDate1 - startDate2;
+                            .sort((promo1: any, promo2: any) => {
+                                return (new Date(promo1.startDate) as any) - (new Date(promo2.startDate) as any);
                             })[0]
                             ;
 
@@ -68,8 +66,8 @@ export class EpicGamesSearcherTask extends Task {
                         freeNow = true;
                         // Receive the current promo for the game
                         promos = element.promotions.promotionalOffers
-                            .flatMap(offer => offer.promotionalOffers)
-                            .find(promo => {
+                            .flatMap((offer: any) => offer.promotionalOffers)
+                            .find((promo: any) => {
                                 const startDate = new Date(promo.startDate);
                                 const endDate = new Date(promo.endDate);
                                 return new Date() >= startDate && new Date() <= endDate;
@@ -84,7 +82,7 @@ export class EpicGamesSearcherTask extends Task {
                 this.manager.reportSuccessfulTask(this, this.games);
             }).catch((error) => {
                 console.error("[TASK]: " + this.name + " failed! Down below: " + error.message + " \n" + error.stack)
-                this.manager.reportUnsuccessfulTask(this);
+                this.manager.reportUnsuccessfulTask(this, this.games);
             })
         });
     }

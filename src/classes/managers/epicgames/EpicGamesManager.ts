@@ -20,5 +20,6 @@ export class EpicGamesManager extends Manager {
     }
 
     reportUnsuccessfulTask(task: Task, ...args: any[]): void {
+        console.log("[TASK]: " + task.name + " unsuccessfully completed!")
     }
 }
