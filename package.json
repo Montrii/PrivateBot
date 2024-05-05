@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc --module commonjs",
-    "start": "javascript-obfuscator ./dist --compact true --self-defending false --output ./dist && node .",
-    "startNew": "tsc --module commonjs && javascript-obfuscator ./dist --compact true --self-defending false --output ./dist && node ."
+    "start": "javascript-obfuscator ./dist --compact true --dead-code-injection true --self-defending false --rename-globals true --output ./dist && node .",
+    "startNew": "tsc --module commonjs && javascript-obfuscator ./dist --compact true --dead-code-injection true --self-defending false --rename-globals true --output ./dist && node ."
   },
   "repository": {
     "type": "git",
