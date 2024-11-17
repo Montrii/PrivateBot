@@ -15,6 +15,7 @@ import {EpicGamesManager} from "./classes/managers/epicgames/EpicGamesManager";
 import {DiscordUpdater} from "./classes/managers/discord/DiscordUpdater";
 import {GuildInformer} from "./classes/backend/GuildInformer";
 import {CommandRegister} from "./classes/backend/CommandRegister";
+import {EbayManager} from "./classes/managers/ebay/EbayManager";
 
 
 // Class Hierachy
@@ -46,8 +47,10 @@ client.on("ready", async (user) => {
     // Registering all commands
     //await CommandRegister.getInstance().setClient(client).registerCommands();
 
+
+    await new EbayManager().runAllTasks()
     //await new SteamManager().runAllTasks()
-    await new EpicGamesManager().runAllTasks()
+    //await new EpicGamesManager().runAllTasks()
 
 })
 

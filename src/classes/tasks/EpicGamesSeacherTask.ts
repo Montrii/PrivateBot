@@ -80,6 +80,7 @@ export class EpicGamesSearcherTask extends Task {
                     let slug: string;
 
                     if (element.offerMappings?.length) {
+                        // @ts-ignore
                         const offerMappingWithOfferPageType = element.offerMappings.find(mapping => mapping.pageType === 'offer');
                         slug = offerMappingWithOfferPageType ? offerMappingWithOfferPageType.pageSlug : element.offerMappings[0].pageSlug;
                     } else if (element.catalogNs.mappings?.length) {
