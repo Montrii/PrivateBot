@@ -263,13 +263,13 @@ export class EbayOfferSearchingTask extends Task {
                     const sellerInfoText = $newHtml('span.s-item__seller-info-text').text().trim();
 
                     if (sellerInfoText) {
-                        // Extract the seller name, sold count, and rating using regex
-                        const sellerMatch = sellerInfoText.match(/^([^\s]+) \((\d+)\) (\d+(\.\d+)?)%$/);
+                        // Updated regex to handle both comma and dot in rating percentage and floating-point sold count
+                        const sellerMatch = sellerInfoText.match(/^([^\s]+) \((\d+(\.\d+)?)\) (\d+([.,]\d+)?)%$/);
 
                         if (sellerMatch) {
-                            const sellerName = sellerMatch[1];  // Seller name, e.g., "r_d2008"
-                            const soldCount = parseInt(sellerMatch[2], 10);  // Number of items sold, e.g., 567
-                            const sellerRating = parseFloat(sellerMatch[3]);  // Seller rating percentage, e.g., 80% or 1.208%
+                            const sellerName = sellerMatch[1];  // Seller name, e.g., "niels111"
+                            const soldCount = parseFloat(sellerMatch[2]);  // Number of items sold, e.g., 2.805
+                            const sellerRating = parseFloat(sellerMatch[4].replace(',', '.'));  // Rating percentage, e.g., 100 or 99.7%
 
                             // Assign the seller info to the new offer object
                             newOffer.seller = sellerName;
@@ -281,6 +281,8 @@ export class EbayOfferSearchingTask extends Task {
                     } else {
                         console.log('No seller info found.');
                     }
+
+
 
 
 
@@ -308,14 +310,44 @@ export class EbayOfferSearchingTask extends Task {
                         }
 
                         newOffer.isBeddingOffer = true;
+
                     }
                     // check if buy now option
                     else {
                         newOffer.isBeddingOffer = false;  // You can update this flag to reflect the "Buy It Now" status
+                        newOffer.biddingOffersAmount = 0;
+
                     }
+
+
+                    const viewerInfoText = $newHtml('span.s-item__dynamic.s-item__watchCountTotal .BOLD').text().trim();
+
+                    if (viewerInfoText) {
+                        // Clean up the viewer text (remove unnecessary characters and spaces)
+                        const cleanedText = viewerInfoText.replace(/\s+Beobachter$/, '').trim(); // Remove 'Beobachter' and extra spaces
+
+                        // Replace commas with dots to handle cases like 1,000 or 1.5
+                        const normalizedText = cleanedText.replace(',', '.');
+
+                        // Extract the number, allowing for decimal points if they exist
+                        const viewerMatch = normalizedText.match(/^(\d+(\.\d+)?)$/);
+
+                        if (viewerMatch) {
+                            // Convert the normalized viewer amount to a number
+                            const viewerAmount = parseFloat(viewerMatch[1]);
+
+                            // Assuming you have a newOffer object, assign the viewer amount here
+                            newOffer.viewerAmount = viewerAmount;
+                        } else {
+                            console.log("Viewer info does not match the expected format");
+                        }
+                    }
+
 
                     console.log(newOffer.toString());
                     console.log("-------------------------------------------------")
+
+                    offers.push(newOffer);
                 }
                 break;
             default:

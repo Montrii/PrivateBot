@@ -9,6 +9,7 @@ export class EbayOffer {
     private _isBeddingOffer: boolean;
     private _bidExpiring?: Date;  // Renamed and converted to Date object
     private _biddingOffersAmount?: number; // New variable for bidding offers amount
+    private _viewerAmount?: number; // New property for viewer amount
 
     constructor() {}
 
@@ -94,6 +95,14 @@ export class EbayOffer {
         this._biddingOffersAmount = value;
     }
 
+    // Viewer Amount (New property for the number of viewers)
+    get viewerAmount(): number | undefined {
+        return this._viewerAmount;
+    }
+    set viewerAmount(value: number | undefined) {
+        this._viewerAmount = value;
+    }
+
     // toString Method
     toString(): string {
         return `EbayOffer {
@@ -106,7 +115,8 @@ export class EbayOffer {
             SellerRating: ${this._sellerRating}%,
             IsBeddingOffer: ${this._isBeddingOffer},
             OfferExpiring: ${this._bidExpiring ? this._bidExpiring.toISOString() : 'N/A'},
-            BiddingOffersAmount: ${this._biddingOffersAmount ?? 'N/A'}
+            BiddingOffersAmount: ${this._biddingOffersAmount ?? 'N/A'},
+            ViewerAmount: ${this._viewerAmount ?? 'N/A'}
         }`;
     }
 }
