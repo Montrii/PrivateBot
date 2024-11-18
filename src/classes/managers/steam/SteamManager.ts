@@ -14,7 +14,7 @@ export class SteamManager extends Manager {
         this.steamSearcherTask = this.registerTask(new SteamSearcherTask(this) as Task, 60) as SteamSearcherTask;
     }
 
-    runAllTasks() {
+    async runAllTasks() {
         this.steamSearcherTask.runSteamTask();
     }
 

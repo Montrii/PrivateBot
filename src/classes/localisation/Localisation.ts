@@ -27,6 +27,7 @@ export class Localisation {
             // Task descriptions
             SteamSearcherTask: "Searches the internet for free games on Steam.\n Also gives information about the game (like if it is a DLC or not).",
             EpicGamesSearcherTask: "Searches the internet for free games on Epic Games.\n Also gives information about the game (like if it is a DLC or not).",
+            EbayOfferSearchingTask: "Searches the internet for offers on Ebay.",
 
             steamtitle: "Game: ",
             steamdlcTitle: "DLC: ",
@@ -42,7 +43,11 @@ export class Localisation {
             steamageRestriction: "Age Restriction: ",
 
 
-            commandViewTasksDescription: "Displays all tasks in the bot."
+            commandViewTasksDescription: "Displays all tasks in the bot.",
+
+            addEbaySearchDescription: "Adds a search for an item on Ebay.",
+            deleteEbaySearchDescription: "Deletes a search for an item on Ebay.",
+            viewEbaySearchDescription: "Shows all searches for items on Ebay.",
 
         };
 
@@ -69,6 +74,7 @@ export class Localisation {
             // Task descriptions
             SteamSearcherTask: "Sucht im Internet nach kostenlosen Spielen auf Steam.\n Gibt auch Informationen preis über das Spiel (z.B. ob das Spiel ein DLC ist oder nicht).",
             EpicGamesSearcherTask: "Sucht im Internet nach kostenlosen Spielen auf Epic Games.\n Gibt auch Informationen preis über das Spiel (z.B. ob das Spiel ein DLC ist oder nicht).",
+            EbayOfferSearchingTask: "Sucht im Internet nach Angeboten auf Ebay.",
 
 
             steamtitle: "Spiel ",
@@ -84,7 +90,10 @@ export class Localisation {
             steamdlcFor: "DLC für: ",
             steamageRestriction: "Altersbeschränkung: ",
 
-            commandViewTasksDescription: "Zeigt alle Aufgaben im Bot an."
+            commandViewTasksDescription: "Zeigt alle Aufgaben im Bot an.",
+            addEbaySearchDescription: "Fügt eine Suche nach einem Artikel auf Ebay hinzu.",
+            deleteEbaySearchDescription: "Löscht eine Suche nach einem Artikel auf Ebay.",
+            viewEbaySearchDescription: "Zeigt alle Suchen nach Artikeln auf Ebay an.",
         };
 
         this._currentLanguage = "en";

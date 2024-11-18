@@ -5,6 +5,11 @@ import axios from "axios";
 import puppeteer, {Page} from "puppeteer";
 import cheerio from "cheerio";
 
+// A wrapper class for the Ebay offer search item.
+class EbayOfferSearchItem {
+    constructor(public title: string, public sortingListBy: EbaySortingListBy) {}
+}
+
 // Holds an enum of the sorting list by options for Ebay.
 enum EbaySortingListBy {
     BEST = 12,
@@ -14,13 +19,6 @@ enum EbaySortingListBy {
     SOONEST_ENDING = 1,
     NEAREST_TO_ME = 7,
 }
-
-
-// A wrapper class for the Ebay offer search item.
-class EbayOfferSearchItem {
-    constructor(public title: string, public sortingListBy: EbaySortingListBy) {}
-}
-
 
 export class EbayOfferSearchingTask extends Task {
     offers: EbayOffer[] = [];
@@ -33,9 +31,6 @@ export class EbayOfferSearchingTask extends Task {
         super("EbayOfferSearchingTask");
         this.manager = manager;
         this.offers = [];
-
-
-        this.fillSearchResults();
 
     }
 
@@ -207,7 +202,6 @@ export class EbayOfferSearchingTask extends Task {
                 });
 
                 for(let i = 0; i < newerThan48HoursOffers.length; i++) {
-                    console.log("-------------------------------------------------")
                     // @ts-ignore
                     let newHtml = $(newerThan48HoursOffers[i]).html();
                     // @ts-ignore
@@ -342,11 +336,11 @@ export class EbayOfferSearchingTask extends Task {
                             console.log("Viewer info does not match the expected format");
                         }
                     }
+                    else {
+                        newOffer.viewerAmount = 0;
+                    }
 
-
-                    console.log(newOffer.toString());
-                    console.log("-------------------------------------------------")
-
+                    // Add ebay offer
                     offers.push(newOffer);
                 }
                 break;
@@ -361,7 +355,7 @@ export class EbayOfferSearchingTask extends Task {
             // Run puppeteer command.
 
             // Enter Ebay.
-            const browser = await puppeteer.launch({headless: false});
+            const browser = await puppeteer.launch({headless: true});
             const page = await browser.newPage();
             await page.goto("https://www.ebay.de");
             console.log("[TASK]: " + this.name + " is running!")
@@ -370,16 +364,38 @@ export class EbayOfferSearchingTask extends Task {
             await new Promise(resolve => setTimeout(resolve, 5000));
 
 
+            let allOffers = [];
+
             for(let item of this.searchResults) {
                 await this.searchForItem(page, item);
 
                 let offers = await this.searchResultsByFilter(page, item);
+
+// Merge the new offers into allOffers properly by spreading the array
+                allOffers.push(...offers);  // Spread the array into allOffers
+
+// Sort allOffers by offeringExpiring date closest to now
+                allOffers.sort((a, b) => {
+                    const now = new Date(); // Get the current date
+
+                    // @ts-ignore - Handling TypeScript warning, assuming offeringExpiring is a Date
+                    const diffA = Math.abs(new Date(a.offeringExpiring).getTime() - now.getTime());
+                    // @ts-ignore - Same here for b
+                    const diffB = Math.abs(new Date(b.offeringExpiring).getTime() - now.getTime());
+
+                    return diffA - diffB; // Sort by absolute difference (closest date first)
+                });
             }
 
 
+            this.offers = allOffers;
+            await page.close();
+            await browser.close();
+            this.manager.reportSuccessfulTask(this, this.offers);
 
-            // Search by entering UI: https://www.ebay.de/sch/i.html?_from=R40&_nkw=xbox+Classic&_sacat=0&_pgn=0
-
+        }).catch((error) => {
+            console.error("[TASK]: " + this.name + " failed! Down below: " + error.message + " \n" + error.stack)
+            this.manager.reportUnsuccessfulTask(this, this.offers);
         })
     }
 }

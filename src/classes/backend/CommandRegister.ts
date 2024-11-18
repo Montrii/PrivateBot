@@ -1,6 +1,6 @@
 // Registers all commands in the backend
 
-import {ChatInputCommandInteraction, Guild, REST} from "discord.js"
+import {ChatInputCommandInteraction, Guild, REST, SlashCommandBuilder} from "discord.js"
 import {Command} from "./commands/Command";
 import getCommands from "./commands/CommandStorage";
 import {GuildInformer} from "./GuildInformer";
@@ -62,10 +62,40 @@ export class CommandRegister {
                     console.log("[COMMAND-REGISTRATION]: Registering " + guild.botCommands.length + " commands for guild " + guild.name);
 
                     // Put the commands in the right format for registering
-                    const formattedCommands = guild.botCommands.map((command: Command) => ({
-                        name: command.getName(),
-                        description: command.adjustCommandForGuild(guild).getDescription(),
-                    }));
+                    const formattedCommands = guild.botCommands.map((command: Command) => {
+                        // Start building the command using SlashCommandBuilder
+                        const slashCommand = new SlashCommandBuilder()
+                            .setName(command.getName())
+                            .setDescription(command.adjustCommandForGuild(guild).getDescription());
+
+                        // Add parameters to the command
+                        command.parameters.forEach((param) => {
+                            // Add the parameters to the command using proper types (e.g., STRING, INTEGER)
+                            if (param.type === 'STRING') {
+                                slashCommand.addStringOption(option =>
+                                    option.setName(param.name)
+                                        .setDescription(param.description)
+                                        .setRequired(param.required)
+                                );
+                            } else if (param.type === 'INTEGER') {
+                                slashCommand.addIntegerOption(option =>
+                                    option.setName(param.name)
+                                        .setDescription(param.description)
+                                        .setRequired(param.required)
+                                );
+                            } else if (param.type === 'BOOLEAN') {
+                                slashCommand.addBooleanOption(option =>
+                                    option.setName(param.name)
+                                        .setDescription(param.description)
+                                        .setRequired(param.required)
+                                );
+                            }
+                            // Add more types if needed (e.g., USER, CHANNEL, etc.)
+                        });
+
+                        // Return the formatted command
+                        return slashCommand.toJSON(); // Convert SlashCommandBuilder to plain object for API registration
+                    });
 
                     // Make promises to register the commands
                     const promise = rest.put(
@@ -85,7 +115,7 @@ export class CommandRegister {
 
                     console.log("[COMMAND-REGISTRATION]: Successfully registered commands.");
                 } catch (error: any) {
-                    console.error("[COMMAND-REGISTRATION]: Error occurred while registering commands: " + error.message);
+                    console.error("[COMMAND-REGISTRATION]: Error occurred while registering commands: " + error.message + " - " + error.stack);
                 }
 
             } catch(error: any) {

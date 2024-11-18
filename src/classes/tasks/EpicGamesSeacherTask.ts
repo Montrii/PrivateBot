@@ -93,7 +93,6 @@ export class EpicGamesSearcherTask extends Task {
                     // Add the game to the list
                     this.games.push(new EpicGame(element.id, element.urlSlug, element.title, element.description, new Date(element.effectiveDate), element.price.totalPrice.fmtPrice.originalPrice, element.price.totalPrice.currencyCode, element.offerType, thumbnail, "https://store.epicgames.com/en-US/p/" + slug, element.seller.name, freeNow, promos))
                 })
-                console.log(this.games)
                 this.manager.reportSuccessfulTask(this, this.games);
             }).catch((error) => {
                 console.error("[TASK]: " + this.name + " failed! Down below: " + error.message + " \n" + error.stack)

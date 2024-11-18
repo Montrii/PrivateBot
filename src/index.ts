@@ -45,12 +45,13 @@ client.on("ready", async (user) => {
     GuildInformer.getInstance().setClient(client);
 
     // Registering all commands
-    //await CommandRegister.getInstance().setClient(client).registerCommands();
+    await CommandRegister.getInstance().setClient(client).registerCommands();
 
 
+
+    await new SteamManager().runAllTasks()
+    await new EpicGamesManager().runAllTasks()
     await new EbayManager().runAllTasks()
-    //await new SteamManager().runAllTasks()
-    //await new EpicGamesManager().runAllTasks()
 
 })
 
