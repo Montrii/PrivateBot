@@ -124,7 +124,7 @@ export class EbayOffer {
             SellerRating: ${this._sellerRating}%,
             IsBeddingOffer: ${this._isBeddingOffer},
             OfferCreated: ${this._offerCreated ? this._offerCreated.toISOString() : 'N/A'},
-            BidExpiring: ${this._bidExpiring ? this._bidExpiring.toISOString() : 'N/A'},
+            BidExpiring: ${this._bidExpiring ? this._bidExpiring : 'N/A'},
             BiddingOffersAmount: ${this._biddingOffersAmount ?? 'N/A'},
             ViewerAmount: ${this._viewerAmount ?? 'N/A'}
         }`;
