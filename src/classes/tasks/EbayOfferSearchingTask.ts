@@ -4,6 +4,7 @@ import {EbayManager} from "../managers/ebay/EbayManager";
 import axios from "axios";
 import puppeteer, {Page} from "puppeteer";
 import cheerio from "cheerio";
+import moment from "moment";
 
 // A wrapper class for the Ebay offer search item.
 class EbayOfferSearchItem {
@@ -164,6 +165,46 @@ export class EbayOfferSearchingTask extends Task {
 
         return parsedDate;
     }
+
+
+    // Function to convert the extracted time into a future Date object
+    private translateExpiringDate(timeString) {
+        const now = moment();  // Current date and time
+
+        // Extract days, hours, and the target weekday and time
+        const dayMatch = timeString.match(/(\d+)\s*T/);  // Match days (e.g., "2 T")
+        const hourMatch = timeString.match(/(\d+)\s*Std/);  // Match hours (e.g., "17 Std")
+        const weekdayMatch = timeString.match(/(Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag)/);  // Match weekday (e.g., "Donnerstag")
+        const timeMatch = timeString.match(/(\d{2}):(\d{2})/);  // Match time (e.g., "17:10")
+
+        // Calculate the future time
+        let days = dayMatch ? parseInt(dayMatch[1], 10) : 0;
+        let hours = hourMatch ? parseInt(hourMatch[1], 10) : 0;
+
+        // Add days and hours to the current time
+        let targetDate = now.add(days, 'days').add(hours, 'hours');
+
+        // If a specific weekday is provided, adjust the date to the correct weekday
+        if (weekdayMatch) {
+            const weekdayNames = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
+            const targetWeekday = weekdayNames.indexOf(weekdayMatch[0]);
+
+            // Adjust to the next occurrence of the given weekday
+            const currentWeekday = targetDate.day();
+            const diffDays = targetWeekday - currentWeekday;
+            targetDate.add(diffDays, 'days');
+        }
+
+        // Set the specific time (e.g., "17:10")
+        if (timeMatch) {
+            targetDate.hour(parseInt(timeMatch[1], 10));
+            targetDate.minute(parseInt(timeMatch[2], 10));
+            targetDate.second(0);  // Set seconds to 0
+        }
+
+        // Return the future date in ISO 8601 format (UTC)
+        return targetDate.utc().format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+    }
     async searchResultsByFilter(page: Page, filter: EbayOfferSearchItem) {
         let offers: any[] = [];
 
@@ -194,7 +235,7 @@ export class EbayOfferSearchingTask extends Task {
                             const hoursDiff = Math.floor(Math.abs(now - listingDate) / 36e5); // Difference in hours
 
                             // If the date is within 48 hours, add it to the filteredLis array
-                            if (hoursDiff <= 48) {
+                            if (hoursDiff <= 72) {
                                 newerThan48HoursOffers.push(liElement);
                             }
                         }
@@ -211,7 +252,7 @@ export class EbayOfferSearchingTask extends Task {
 
 
 
-                    newOffer.offerExpiring = this.parseDate($newHtml('.s-item__listingDate .BOLD').text().trim());
+                    newOffer.offerCreated = this.parseDate($newHtml('.s-item__listingDate .BOLD').text().trim());
                     // Check for img div
                     $newHtml('div.s-item__image-wrapper').each((index, element) => {
                         // Find the img inside the div
@@ -339,6 +380,35 @@ export class EbayOfferSearchingTask extends Task {
                     else {
                         newOffer.viewerAmount = 0;
                     }
+
+                    try {
+                        await page.goto(newOffer.link);
+
+                        // Wait for the timer element to be available on the page
+                        await page.waitForSelector('span.ux-timer__text', {timeout: 10000});
+
+                        // Extract the HTML content of the time string
+                        const timeString = await page.$eval('span.ux-timer__text', element => {
+                            return element.textContent.replace('Endet in ', '').trim(); // Clean up the string
+                        });
+
+                        if(timeString) {
+                            // Translate the time string into a future date
+                            newOffer.bidExpiring = this.translateExpiringDate(timeString);
+                        }
+
+
+                        console.log(newOffer.toString())
+
+
+                    } catch (error) {
+                        console.error(`Failed to load offer page for ${newOffer.title}!`);
+
+                        console.log(newOffer.toString())
+                        // Add ebay offer to the list
+                        offers.push(newOffer);
+                    }
+
 
                     // Add ebay offer
                     offers.push(newOffer);

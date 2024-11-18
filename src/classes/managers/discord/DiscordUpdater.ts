@@ -6,6 +6,8 @@ import {SteamSettings} from "../steam/SteamSettings";
 
 const { ButtonStyle } = require('discord.js');
 import {ButtonBuilder, EmbedBuilder, ActionRowBuilder} from "discord.js";
+import {EbayOffer} from "../ebay/EbayOffer";
+import {EbaySettings} from "../ebay/EbaySettings";
 
 // Handles updating any discord bot messages send by the bot.
 
@@ -160,5 +162,107 @@ export class DiscordUpdater {
     private async addSteamGameToChannel(guild: any, steamSettings: any, game: SteamGame, localisation: Localisation) {
         const components = await this.buildSteamGameEmbed(guild, steamSettings, game, localisation)
         guild.channelToSendTo.send(components)
+    }
+
+
+    private async addEbayOfferToChannel(guild: any, ebaySettings: any, offer: EbayOffer, localisation: Localisation) {
+        const components = await this.buildEbayOfferEmbed(guild, ebaySettings, offer, localisation)
+        guild.channelToSendTo.send(components)
+    }
+
+
+
+    private async buildEbayOfferEmbed(guild: any, ebaySettings: any, offer: EbayOffer, localisation: Localisation) {
+        let gameButton = new ButtonBuilder()
+            .setStyle(ButtonStyle.Link)
+            .setURL(offer.link!)
+            .setLabel(localisation.get("ebayadd") as string)
+
+        let gameMainButton;
+
+        const actionRow = new ActionRowBuilder()
+
+        const gameEmbed = new EmbedBuilder()
+            .setColor(ebaySettings.color)
+            .setThumbnail(offer.image!)
+            .setTitle(localisation.get("ebaytitle") + offer.title!)
+            .setURL(offer.link!)
+
+
+        return {embeds: [gameEmbed]}
+    }
+
+    updateEbaySearchResults(offers: EbayOffer[]) {
+        const guildInformer = GuildInformer.getInstance();
+        const ebaySettings = EbaySettings.getEbayDiscordEmbedSettings();
+        const localisation = new Localisation();
+
+        // Loop through each guild that the bot is part of that has the channel name that the bot is supposed to send to.
+        // @ts-ignore
+        guildInformer.getGuildsWithChannelName(ebaySettings.channelToSend).forEach((guild: any) => {
+            // Adjust the language of the bot to the preferred language of the guild.
+            localisation.setLanguage(guild.preferredLocale)
+
+            // Now we can scan of any messages we have sent and verify if we need to update them.
+            guild.channelToSendTo.messages.fetch({ limit: 100 })
+                .then((messages: any) => {
+                    // We filter out any messages that are not from the bot.
+                    // Checks if any messages from the bot with embeds are found that contain the appId of the games.
+                    const messagesFromThisModule = messages.filter((message: any) => {
+                        return message.author.id == this.user.id && message.embeds !== undefined && message.embeds !== null || message.embeds.some((embed: any) => {
+                            return embed.fields?.some((field: any) => {
+                                return offers.some((game) => game.title === field.value)
+                            });
+                        });
+                    });
+
+                    // Return a promise to continue with the next steps
+                    return new Promise((resolve, reject) => {
+                        if (messagesFromThisModule.size > 0) {
+                            resolve(messagesFromThisModule);
+                        } else {
+                            resolve(null);
+                        }
+                    });
+                })
+                .then(async (messages: any) => {
+                    if (messages) {
+                        // Iterate over the offers and check if the message already exists
+                        for (const offer of offers) {
+                            const offerTitle = localisation.get("ebaytitle") + offer.title!;
+                            // Find the message with the specific game title in the embed
+                            const gameMessage = messages.find((message: any) => {
+                                return message.embeds.some((embed: any) => {
+                                    return embed.title === offerTitle; // Check embed title
+                                });
+                            });
+
+                            if (!gameMessage) {
+                                // If the message with this offer does not exist, add it.
+                                await this.addEbayOfferToChannel(guild, ebaySettings, offer, localisation);
+                                console.log("[DISCORD]: Adding Ebay offer: " + offer.title);
+                            } else {
+                                // If the message with this offer already exists, update it (if needed).
+                                // In this example, the logic to edit the message would go here.
+                                // You could update the embed in this block, if necessary.
+                                console.log("[DISCORD]: Ebay offer already exists: " + offer.title);
+                            }
+                        }
+                    } else {
+                        // If no messages exist, add all the offers
+                        for (const offer of offers) {
+                            await this.addEbayOfferToChannel(guild, ebaySettings, offer, localisation);
+                            console.log("[DISCORD]: Adding Ebay offer: " + offer.title);
+                        }
+                    }
+                })
+                .finally(() => {
+                    console.log("[DISCORD]: Finished updating Steam Ebay offers for Guild: " + guild.name);
+                })
+                .catch((error: Error) => {
+                    console.error("[DISCORD]: Error while updating Steam Ebay offers for guild: " + guild.name + "\nDown below: " + error.message + " \n" + error.stack);
+                });
+
+        })
     }
 }

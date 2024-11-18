@@ -43,6 +43,18 @@ export class Localisation {
             steamageRestriction: "Age Restriction: ",
 
 
+
+            ebayadd: "Open",
+            ebaytitle: "Offer: ",
+            ebaySeller: "Seller: ",
+            ebaySellerSold: "Seller Sold: ",
+            ebayPrice: "Price: ",
+            ebayBidExpiring: "Offer Expiring: ",
+            ebayBiddingOffersAmount: "Bidding Offers: ",
+            ebaySellerRating: "Seller Rating: ",
+            ebayIsBeddingOffer: "Is Bedding Offer: ",
+            ebayViewerAmount: "Viewer Amount: ",
+
             commandViewTasksDescription: "Displays all tasks in the bot.",
 
             addEbaySearchDescription: "Adds a search for an item on Ebay.",
@@ -89,6 +101,18 @@ export class Localisation {
             steamuntilDate: "Erhältlich bis: ",
             steamdlcFor: "DLC für: ",
             steamageRestriction: "Altersbeschränkung: ",
+
+
+            ebayadd: "Öffnen",
+            ebaytitle: "Angebot: ",
+            ebaySeller: "Verkäufer: ",
+            ebaySellerSold: "Verkäufer verkauft: ",
+            ebayPrice: "Preis: ",
+            ebayBidExpiring: "Angebot endet: ",
+            ebayBiddingOffersAmount: "Bietende: ",
+            ebaySellerRating: "Verkäufer Bewertung: ",
+            ebayIsBeddingOffer: "Ist Bietendes Angebot: ",
+            ebayViewerAmount: "Anzahl der Betrachter: ",
 
             commandViewTasksDescription: "Zeigt alle Aufgaben im Bot an.",
             addEbaySearchDescription: "Fügt eine Suche nach einem Artikel auf Ebay hinzu.",

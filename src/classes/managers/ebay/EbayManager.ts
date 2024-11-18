@@ -4,6 +4,7 @@ import {Manager} from "../../backend/Manager";
 import {Task} from "../../tasks/Task";
 import {EbayOfferSearchingTask} from "../../tasks/EbayOfferSearchingTask";
 import {EbayOfferSearchResultsTask} from "../../tasks/EbayOfferSearchResultsTask";
+import {DiscordUpdater} from "../discord/DiscordUpdater";
 
 
 // A wrapper class for the Ebay offer search item.
@@ -49,6 +50,11 @@ export class EbayManager extends Manager {
                 console.log("[TASK]: Found search result: '" + this.ebayOfferSearchResultsTask.searchResults[i] + "'.")
                 this.ebaySearchingOfferTask.searchResults.push(new EbayOfferSearchItem(this.ebayOfferSearchResultsTask.searchResults[i], EbaySortingListBy.NEWEST_OFFER));
             }
+        }
+
+
+        if(task instanceof EbayOfferSearchingTask) {
+            DiscordUpdater.getInstance().updateEbaySearchResults(args[0]);
         }
         console.log("[TASK]: " + task.name + " successfully completed!")
     }

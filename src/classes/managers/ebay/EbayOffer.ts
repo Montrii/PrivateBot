@@ -7,8 +7,9 @@ export class EbayOffer {
     private _sellerSold: number;
     private _sellerRating: number; // New field for seller rating
     private _isBeddingOffer: boolean;
-    private _bidExpiring?: Date;  // Renamed and converted to Date object
-    private _biddingOffersAmount?: number; // New variable for bidding offers amount
+    private _offerCreated?: Date;  // Renamed from bidExpiring to offerCreated
+    private _bidExpiring?: Date;  // New variable for bid expiration date
+    private _biddingOffersAmount?: number; // New property for bidding offers amount
     private _viewerAmount?: number; // New property for viewer amount
 
     constructor() {}
@@ -79,11 +80,19 @@ export class EbayOffer {
         this._isBeddingOffer = value;
     }
 
-    // Bid Expiring (Renamed and converted to Date)
-    get offerExpiring(): Date | undefined {
+    // Offer Created (Renamed from bidExpiring)
+    get offerCreated(): Date | undefined {
+        return this._offerCreated;
+    }
+    set offerCreated(value: Date | undefined) {
+        this._offerCreated = value;
+    }
+
+    // Bid Expiring (New property for bid expiration date)
+    get bidExpiring(): Date | undefined {
         return this._bidExpiring;
     }
-    set offerExpiring(value: Date | undefined) {
+    set bidExpiring(value: Date | undefined) {
         this._bidExpiring = value;
     }
 
@@ -114,7 +123,8 @@ export class EbayOffer {
             SellerSold: ${this._sellerSold},
             SellerRating: ${this._sellerRating}%,
             IsBeddingOffer: ${this._isBeddingOffer},
-            OfferExpiring: ${this._bidExpiring ? this._bidExpiring.toISOString() : 'N/A'},
+            OfferCreated: ${this._offerCreated ? this._offerCreated.toISOString() : 'N/A'},
+            BidExpiring: ${this._bidExpiring ? this._bidExpiring.toISOString() : 'N/A'},
             BiddingOffersAmount: ${this._biddingOffersAmount ?? 'N/A'},
             ViewerAmount: ${this._viewerAmount ?? 'N/A'}
         }`;
