@@ -408,7 +408,8 @@ export class EbayOfferSearchingTask extends Task {
                             // Translate the time string into a future date
                             newOffer.bidExpiring = this.translateExpiringDate(timeString);
                         } else {
-                            newOffer.bidExpiring = new Date(new Date().getFullYear(), 11, 31); // Default fallback
+                            newOffer.bidExpiring = new Date(new Date().getFullYear(), 11, 31).toISOString() as any; // Default fallback as 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'
+                            // .format('YYYY-MM-DDTHH:mm:ss.SSS[Z]')
                         }
 
 // Wait for the viewer count element to be available (increase timeout if necessary)
@@ -455,7 +456,7 @@ export class EbayOfferSearchingTask extends Task {
                         console.error(`Failed to load offer page for ${newOffer.title}! Error: ${error}`);
 
                         // Update bidExpiring to the end of the year if loading fails
-                        newOffer.bidExpiring = new Date(new Date().getFullYear(), 11, 31);
+                        newOffer.bidExpiring = new Date(new Date().getFullYear(), 11, 31).toISOString() as any;
                     }
 
                     offers.push(newOffer);

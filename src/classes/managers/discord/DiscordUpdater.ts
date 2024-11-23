@@ -175,6 +175,20 @@ export class DiscordUpdater {
         await message.edit(components)
     }
 
+    private formatDateIntoGermanDate(dateString: string) {
+        let offerCreatedDate = new Date(dateString); // Create a new Date object from the string
+        const day = String(offerCreatedDate.getDate()).padStart(2, '0'); // Get day and pad with leading zero if needed
+        const month = String(offerCreatedDate.getMonth() + 1).padStart(2, '0'); // Get month (0-indexed, so add 1)
+        const year = offerCreatedDate.getFullYear(); // Get the full year
+        const hours = String(offerCreatedDate.getHours()).padStart(2, '0'); // Get hours and pad with leading zero
+        const minutes = String(offerCreatedDate.getMinutes()).padStart(2, '0'); // Get minutes and pad with leading zero
+        const seconds = String(offerCreatedDate.getSeconds()).padStart(2, '0'); // Get seconds and pad with leading zero
+
+        const formattedDate = `${day}.${month}.${year} ${hours}:${minutes}:${seconds}`;
+
+        return formattedDate
+    }
+
 
 
     private async buildEbayOfferEmbed(guild: any, ebaySettings: any, offer: EbayOffer, localisation: Localisation) {
@@ -198,15 +212,7 @@ export class DiscordUpdater {
             .setURL(offer.link!)
 
         // Add the fields to the embed
-        gameEmbed.addFields(({ name: localisation.get("ebayOfferCreated"), value: offer.offerCreated?.toLocaleString('en-GB', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: false  // Use 24-hour format
-            }), inline: false } as any))
+        gameEmbed.addFields(({ name: localisation.get("ebayOfferCreated"), value: this.formatDateIntoGermanDate(offer.offerCreated?.toISOString()), inline: false } as any))
 
         gameEmbed.addFields(({ name: localisation.get("ebayPrice"), value: offer.price ?? 0 + "", inline: false } as any))
 
@@ -219,15 +225,7 @@ export class DiscordUpdater {
         if(offer.isBeddingOffer) {
             gameEmbed.setDescription(localisation.get("ebaydescriptionWithBid") as string)
 
-            gameEmbed.addFields(({name: localisation.get("ebayBidExpiring"), value: offer.bidExpiring?.toLocaleString('en-GB', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit',
-                    hour12: false  // Use 24-hour format
-                }).replace(",", " "), inline: true} as any))
+            gameEmbed.addFields(({name: localisation.get("ebayBidExpiring"), value: this.formatDateIntoGermanDate(offer.bidExpiring), inline: true} as any))
             gameEmbed.addFields(({name: localisation.get("ebayBiddingOffersAmount"), value: offer.biddingOffersAmount + "", inline: true} as any))
 
             gameEmbed.setColor(ebaySettings.bidColor)
@@ -252,78 +250,78 @@ export class DiscordUpdater {
         const localisation = new Localisation();
 
         // Loop through each guild that the bot is part of that has the channel name that the bot is supposed to send to.
-        guildInformer.getGuildsWithChannelName(ebaySettings.channelToSend).forEach((guild: any) => {
-            // Adjust the language of the bot to the preferred language of the guild.
-            localisation.setLanguage(guild.preferredLocale);
+        const guilds = await guildInformer.getGuildsWithChannelName(ebaySettings.channelToSend);
 
-            // Fetch all messages from the channel (with a limit, you can adjust this as needed)
-            guild.channelToSendTo.messages.fetch({ limit: 100 })
-                .then(async (messages: any) => {
-                    // Convert messages to an array for easier processing (filtering, etc.)
-                    const messagesArray = Array.from(messages.values());
+        // Use for...of to await each iteration sequentially
+        for (const guild of guilds) {
+            try {
+                // Adjust the language of the bot to the preferred language of the guild.
+                localisation.setLanguage(guild.preferredLocale);
 
-                    // Step 1: Check if any message contains "Angebot: <title>"
-                    // We will iterate through each offer to see if it has a matching message or if we need to delete/update any existing message.
-                    for (const offer of offers) {
-                        const offerTitle = localisation.get("ebaytitle") + offer.title!; // Construct the offer title to search for
+                // Fetch all messages from the channel (with a limit, you can adjust this as needed)
+                const messages = await guild.channelToSendTo.messages.fetch({ limit: 100 });
 
-                        // Check if the combined title exceeds 256 characters
-                        let titleMessage = "";
-                        let embedTitle = offerTitle;
-                        if (offerTitle.length > 64) {
-                            titleMessage = localisation.get("ebayTooLongTitle") + offer.title;  // Full title as plain text
-                        }
+                // Convert messages to an array for easier processing (filtering, etc.)
+                const messagesArray = Array.from(messages.values());
 
-                        // Step 2: Find an existing message that contains the title of this offer
-                        const existingMessage = messagesArray.find((message: any) => {
-                            // Search for embed title or check for content in regular message
-                            return message.embeds.some((embed: any) => embed.title && embed.title.includes(embedTitle)) ||
-                                (message.content && message.content.includes(offerTitle));
-                        }) as any;
+                // Step 1: Check if any message contains "Angebot: <title>"
+                // We will iterate through each offer to see if it has a matching message or if we need to delete/update any existing message.
+                for (const offer of offers) {
+                    const offerTitle = localisation.get("ebaytitle") + offer.title!; // Construct the offer title to search for
 
-                        // Step 3: Check if we found the message
-                        if (existingMessage) {
-                            // If the offer exists in the current offers array, we update the message
-                            const offerExists = offers.some((game) => game.title === offer.title);
-                            if (offerExists) {
-                                await this.updateEbayOfferToChannel(existingMessage, guild, ebaySettings, offer, localisation);
-                                console.log("[DISCORD]: Updated Ebay offer: " + offer.title);
-                            } else {
-                                // If the offer doesn't exist anymore, delete the message
-                                await existingMessage.delete();
-                                console.log("[DISCORD]: Deleted obsolete Ebay offer: " + offer.title);
-                            }
+                    // Check if the combined title exceeds 256 characters
+                    let titleMessage = localisation.get("ebayTooLongTitle") + offer.title;
+                    let embedTitle = offerTitle;
+
+                    // Step 2: Find an existing message that contains the title of this offer
+                    const existingMessage = messagesArray.find((message: any) => {
+                        // Search for embed title or check for content in regular message
+                        return message.embeds.some((embed: any) => embed.title && embed.title.includes(embedTitle)) ||
+                            (message.content && message.content.includes(titleMessage));
+                    }) as any;
+
+                    // Step 3: Check if we found the message
+                    if (existingMessage) {
+                        // If the offer exists in the current offers array, we update the message
+                        const offerExists = offers.some((game) => game.title === offer.title);
+                        if (offerExists) {
+                            await this.updateEbayOfferToChannel(existingMessage, guild, ebaySettings, offer, localisation);
+                            console.log("[DISCORD]: Updated Ebay offer: " + offer.title);
                         } else {
-                            // Step 4: If no message for this offer exists, we add a new one
-                            const offerExists = offers.some((game) => game.title === offer.title);
-                            if (offerExists) {
-                                await this.addEbayOfferToChannel(guild, ebaySettings, offer, localisation);
-                                console.log("[DISCORD]: Added new Ebay offer: " + offer.title);
-                            }
+                            // If the offer doesn't exist anymore, delete the message
+                            await existingMessage.delete();
+                            console.log("[DISCORD]: Deleted obsolete Ebay offer: " + offer.title);
+                        }
+                    } else {
+                        // Step 4: If no message for this offer exists, we add a new one
+                        const offerExists = offers.some((game) => game.title === offer.title);
+                        if (offerExists) {
+                            await this.addEbayOfferToChannel(guild, ebaySettings, offer, localisation);
+                            console.log("[DISCORD]: Added new Ebay offer: " + offer.title);
                         }
                     }
+                }
 
-                    // Step 5: Ensure that any message not associated with a current offer is deleted.
-                    // Delete any messages that are not found in the `offers` array.
-                    for (const message of messagesArray) {
-                        const offerTitle = localisation.get("ebaytitle");
-                        const isOfferMessage = message.embeds.some((embed: any) => embed.title && embed.title.startsWith(offerTitle));
+                // Step 5: Ensure that any message not associated with a current offer is deleted.
+                // Delete any messages that are not found in the `offers` array.
+                for (const message of messagesArray) {
+                    const offerTitle = localisation.get("ebaytitle");
+                    const isOfferMessage = message.embeds.some((embed: any) => embed.title && embed.title.startsWith(offerTitle));
 
-                        // If the message is an offer message but the offer no longer exists, delete the message
-                        if (isOfferMessage && !offers.some((game) => game.title === message.embeds[0].title?.replace(offerTitle, ''))) {
-                            await message.delete();
-                            console.log("[DISCORD]: Deleted obsolete Ebay offer: " + message.embeds[0].title);
-                        }
+                    // If the message is an offer message but the offer no longer exists, delete the message
+                    if (isOfferMessage && !offers.some((game) => game.title === message.embeds[0].title?.replace(offerTitle, ''))) {
+                        await message.delete();
+                        console.log("[DISCORD]: Deleted obsolete Ebay offer: " + message.embeds[0].title);
                     }
-                })
-                .finally(() => {
-                    console.log("[DISCORD]: Finished updating Ebay offers for Guild: " + guild.name);
-                })
-                .catch((error: Error) => {
-                    console.error("[DISCORD]: Error while updating Ebay offers for guild: " + guild.name + "\nDown below: " + error.message + " \n" + error.stack);
-                });
-        });
+                }
+
+                console.log("[DISCORD]: Finished updating Ebay offers for Guild: " + guild.name);
+            } catch (error) {
+                console.error("[DISCORD]: Error while updating Ebay offers for guild: " + guild.name + "\nDown below: " + error.message + " \n" + error.stack);
+            }
+        }
     }
+
 
 
 
