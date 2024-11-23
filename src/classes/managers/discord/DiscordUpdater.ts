@@ -252,6 +252,16 @@ export class DiscordUpdater {
         // Loop through each guild that the bot is part of that has the channel name that the bot is supposed to send to.
         const guilds = await guildInformer.getGuildsWithChannelName(ebaySettings.channelToSend);
 
+
+        // Sort the offers array by the offerCreated ISO string in descending order
+        offers.sort((a, b) => {
+            // Convert offerCreated strings to Date objects and compare
+            const dateA = new Date(a.offerCreated);
+            const dateB = new Date(b.offerCreated);
+
+            // Return the comparison in descending order (most recent first)
+            return dateA.getTime() - dateB.getTime();
+        });
         // Use for...of to await each iteration sequentially
         for (const guild of guilds) {
             try {
@@ -267,18 +277,22 @@ export class DiscordUpdater {
                 // Step 1: Check if any message contains "Angebot: <title>"
                 // We will iterate through each offer to see if it has a matching message or if we need to delete/update any existing message.
                 for (const offer of offers) {
-                    const offerTitle = localisation.get("ebaytitle") + offer.title!; // Construct the offer title to search for
+                    const offerTitle = localisation.get("ebaytitle") + offer.title!.trim(); // Trim the title for cleaner comparison
 
                     // Check if the combined title exceeds 256 characters
-                    let titleMessage = localisation.get("ebayTooLongTitle") + offer.title;
+                    let titleMessage = localisation.get("ebayTooLongTitle") + offer.title!.trim();
                     let embedTitle = offerTitle;
 
                     // Step 2: Find an existing message that contains the title of this offer
                     const existingMessage = messagesArray.find((message: any) => {
-                        // Search for embed title or check for content in regular message
-                        return message.embeds.some((embed: any) => embed.title && embed.title.includes(embedTitle)) ||
-                            (message.content && message.content.includes(titleMessage));
-                    }) as any;
+                        // Normalize the message content and embed titles for comparison
+                        const messageContent = message.content.trim();
+                        const embedTitles = message.embeds.map((embed: any) => embed.title?.trim());
+
+                        // Check if the combined title exists in the content or embed title (case-insensitive)
+                        return embedTitles.some((embedTitle) => embedTitle && embedTitle.toLowerCase().includes(embedTitle.toLowerCase())) ||
+                            messageContent.toLowerCase().includes(titleMessage.toLowerCase());
+                    });
 
                     // Step 3: Check if we found the message
                     if (existingMessage) {
@@ -309,7 +323,7 @@ export class DiscordUpdater {
                     const isOfferMessage = message.embeds.some((embed: any) => embed.title && embed.title.startsWith(offerTitle));
 
                     // If the message is an offer message but the offer no longer exists, delete the message
-                    if (isOfferMessage && !offers.some((game) => game.title === message.embeds[0].title?.replace(offerTitle, ''))) {
+                    if (isOfferMessage && !offers.some((game) => game.title === message.embeds[0].title?.replace(offerTitle, '').trim())) {
                         await message.delete();
                         console.log("[DISCORD]: Deleted obsolete Ebay offer: " + message.embeds[0].title);
                     }
@@ -320,6 +334,7 @@ export class DiscordUpdater {
                 console.error("[DISCORD]: Error while updating Ebay offers for guild: " + guild.name + "\nDown below: " + error.message + " \n" + error.stack);
             }
         }
+
     }
 
 

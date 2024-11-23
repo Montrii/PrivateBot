@@ -264,7 +264,7 @@ export class EbayOfferSearchingTask extends Task {
                         const imgAlt = img.attr('alt');
 
                         if (imgAlt != null) {
-                            newOffer.title = imgAlt;
+                            newOffer.title = imgAlt.trim();
                         }
                         if (imgSrc != null) {
                             newOffer.image = imgSrc;
@@ -386,36 +386,39 @@ export class EbayOfferSearchingTask extends Task {
                     }
 
                     try {
-                        // Wait for 5 seconds (can be removed or adjusted if needed)
-                        await this.sleep(5000);
-
                         // Navigate to the new offer page and ensure that the page has fully loaded
                         await page.goto(newOffer.link, { waitUntil: 'networkidle2', timeout: 60000 }); // wait until network is idle
 
-                        // Wait for the timer element to be available on the page (increase timeout if necessary)
-                        let timeString = '';
+
+
+                        // Wait for the element to appear in the DOM within 15 seconds
+                        const selector = 'div.ux-layout-section__textual-display--statusMessage .ux-textspans--BOLD';
+                        let found = false;
+
                         try {
-                            await page.waitForSelector('span.ux-timer__text', { timeout: 15000 });
-                            // Extract the HTML content of the time string
-                            timeString = await page.$eval('span.ux-timer__text', element => {
-                                return element.textContent.replace('Endet in ', '').trim(); // Clean up the string
-                            });
-                        } catch (e) {
-                            console.log('Timeout occurred while waiting for timer element, proceeding without it.');
+                            // Wait for the element to be present
+                            await page.waitForSelector(selector, { timeout: 7500 });
+
+                            // Extract the text content
+                            const text = await page.$eval(selector, element => element.textContent.trim());
+
+                            // Check if the text contains the expected substring
+                            if (text.startsWith("Dieses Angebot wurde verkauft")) {
+                                found = true;
+
+                                // skip this element entirely.
+                                console.log("[EBAY-OFFER-TASK]: Offer " + newOffer.title + " has been sold. Skipping.");
+                                continue;
+                            }
+                        } catch (error) {
+                            //console.log("Element not found within 15 seconds.");
                         }
 
-                        if (timeString) {
-                            // Translate the time string into a future date
-                            newOffer.bidExpiring = this.translateExpiringDate(timeString);
-                        } else {
-                            newOffer.bidExpiring = new Date(new Date().getFullYear(), 11, 31).toISOString() as any; // Default fallback as 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'
-                            // .format('YYYY-MM-DDTHH:mm:ss.SSS[Z]')
-                        }
 
 // Wait for the viewer count element to be available (increase timeout if necessary)
                         let viewerAmount = 0;
                         try {
-                            await page.waitForSelector('div[data-testid="ux-section-icon-with-details"] span.ux-textspans', { timeout: 15000 });
+                            await page.waitForSelector('div[data-testid="ux-section-icon-with-details"] span.ux-textspans', { timeout: 7500 });
                             const parentHtml = await page.$eval('div[data-testid="ux-section-icon-with-details"]', element => element.innerHTML);
                             const text = parentHtml.match(/(\d+)\sLeute beobachten/);
 
@@ -433,7 +436,7 @@ export class EbayOfferSearchingTask extends Task {
                         // Wait for the offers (Gebot) element to be available on the page (increase timeout if necessary)
                         let bidAmount = newOffer.biddingOffersAmount;
                         try {
-                            await page.waitForSelector('a.ux-action span.ux-textspans--PSEUDOLINK', { timeout: 15000 });
+                            await page.waitForSelector('a.ux-action span.ux-textspans--PSEUDOLINK', { timeout: 7500 });
 
                             // Extract the HTML content of the offer count
                             const offerText = await page.$eval('a.ux-action span.ux-textspans--PSEUDOLINK', element => element.textContent.trim());
@@ -452,6 +455,64 @@ export class EbayOfferSearchingTask extends Task {
 
 
 
+                        // Wait for the timer element to be available on the page (increase timeout if necessary)
+                        if(newOffer.isBeddingOffer) {
+
+                            try {
+                                let timeString = '';
+                                await page.waitForSelector('span.ux-timer__text', { timeout: 7500 });
+                                // Extract the HTML content of the time string
+                                timeString = await page.$eval('span.ux-timer__text', element => {
+                                    return element.textContent.replace('Endet in ', '').trim(); // Clean up the string
+                                });
+
+
+                                if (timeString) {
+                                    // Translate the time string into a future date
+                                    newOffer.bidExpiring = this.translateExpiringDate(timeString);
+                                } else {
+                                    newOffer.bidExpiring = new Date(new Date().getFullYear(), 11, 31).toISOString() as any; // Default fallback as 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'
+                                    // .format('YYYY-MM-DDTHH:mm:ss.SSS[Z]')
+                                }
+
+
+                                // Wait for the correct element selector
+                                await page.waitForSelector('span.ux-timer__time-left', { timeout: 7500 });
+
+// Extract the HTML content of the time string
+                                timeString = await page.$eval('span.ux-timer__time-left', element => {
+                                    return element.textContent.trim(); // Clean up the string
+                                });
+
+// Use a regular expression to extract the hours and minutes (e.g., "18:09")
+                                const regex = /(\d{1,2}):(\d{2})/; // Matches time format like "18:09"
+                                const match = timeString.match(regex);
+
+                                if (match) {
+                                    // Extract hours and minutes as numbers
+                                    const hours = parseInt(match[1], 10);  // Hours as number (18)
+                                    const minutes = parseInt(match[2], 10);  // Minutes as number (09)
+
+                                    let current = moment(newOffer.bidExpiring)
+                                    current.set({hour: hours, minute: minutes, seconds: 0, milliseconds: 0})
+                                    newOffer.bidExpiring = current.toDate().toISOString() as any;
+                                } else {
+                                    console.log("No valid time found in the string.");
+                                }
+
+                            } catch (e) {
+                                console.log('Timeout occurred while waiting for timer element, proceeding without it.');
+                                console.error(e)
+                                newOffer.bidExpiring = new Date(new Date().getFullYear(), 11, 31).toISOString() as any;
+                            }
+                        }
+                        else {
+                            newOffer.bidExpiring = new Date(new Date().getFullYear(), 11, 31).toISOString() as any;
+                        }
+
+
+
+
                     } catch (error) {
                         console.error(`Failed to load offer page for ${newOffer.title}! Error: ${error}`);
 
@@ -459,6 +520,7 @@ export class EbayOfferSearchingTask extends Task {
                         newOffer.bidExpiring = new Date(new Date().getFullYear(), 11, 31).toISOString() as any;
                     }
 
+                    console.log("[EBAY-OFFER-TASK]: Found offer: '" + newOffer.title + "'.")
                     offers.push(newOffer);
 
                 }
@@ -484,15 +546,13 @@ export class EbayOfferSearchingTask extends Task {
             await page.goto("https://www.ebay.de");
             console.log("[TASK]: " + this.name + " is running!")
 
-
-            await new Promise(resolve => setTimeout(resolve, 5000));
-
-
             let allOffers = [];
 
             for(let item of this.searchResults) {
-                await this.searchForItem(page, item);
+                //await this.searchForItem(page, item);
+                await page.goto(`https://www.ebay.de/sch/i.html?_from=R40&_nkw=${encodeURIComponent(item.title)}&_sacat=0&_sop=${item.sortingListBy}`, { waitUntil: 'networkidle2', timeout: 60000 }); // wait until network is idle
 
+                console.log("[EBAY-OFFER-TASK]: Navigated to the search results page sort by " + item.sortingListBy + " for '" + item.title + "'.");
                 let offers = await this.searchResultsByFilter(page, item);
 
 // Merge the new offers into allOffers properly by spreading the array
