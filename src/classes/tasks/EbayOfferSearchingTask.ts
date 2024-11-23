@@ -5,6 +5,7 @@ import axios from "axios";
 import puppeteer, {Page} from "puppeteer";
 import cheerio from "cheerio";
 import moment from "moment";
+import fs from "fs";
 
 // A wrapper class for the Ebay offer search item.
 class EbayOfferSearchItem {
@@ -206,14 +207,15 @@ export class EbayOfferSearchingTask extends Task {
         return targetDate.format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
     }
 
-    async searchResultsByFilter(page: Page, filter: EbayOfferSearchItem) {
+    async searchResultsByFilter(cheerioPage: any, filter: EbayOfferSearchItem) {
         let offers: any[] = [];
 
         // get all current offers
-        const ulHtml = await page.$eval('ul.srp-results.srp-list.clearfix', (ul) => ul.outerHTML);
+// Extract the HTML of the `ul` element containing the offers
+        const ulHtml = cheerioPage('ul.srp-results.srp-list.clearfix').html();
 
-        // Step 2: Load the HTML into Cheerio for easier manipulation
-        let $ = cheerio.load(ulHtml);
+// If you need to manipulate or iterate over the `ul` content
+        const $ = cheerio.load(ulHtml);
 
         switch(filter.sortingListBy) {
             case EbaySortingListBy.NEWEST_OFFER:
@@ -386,141 +388,84 @@ export class EbayOfferSearchingTask extends Task {
                     }
 
                     try {
-                        // Navigate to the new offer page and ensure that the page has fully loaded
-                        await page.goto(newOffer.link, { waitUntil: 'networkidle2', timeout: 60000 }); // wait until network is idle
+                        // Fetch the HTML of the offer page
+                        const response = await axios.get(newOffer.link);
+                        const htmlCode = response.data;
 
+                        // Load the HTML into Cheerio
+                        const page$ = cheerio.load(htmlCode);
 
-
-                        // Wait for the element to appear in the DOM within 15 seconds
-                        const selector = 'div.ux-layout-section__textual-display--statusMessage .ux-textspans--BOLD';
-                        let found = false;
-
-                        try {
-                            // Wait for the element to be present
-                            await page.waitForSelector(selector, { timeout: 7500 });
-
-                            // Extract the text content
-                            const text = await page.$eval(selector, element => element.textContent.trim());
-
-                            // Check if the text contains the expected substring
-                            if (text.startsWith("Dieses Angebot wurde verkauft")) {
-                                found = true;
-
-                                // skip this element entirely.
-                                console.log("[EBAY-OFFER-TASK]: Offer " + newOffer.title + " has been sold. Skipping.");
-                                continue;
-                            }
-                        } catch (error) {
-                            //console.log("Element not found within 15 seconds.");
+                        // Check if the offer is already sold
+                        const soldSelector = 'div.ux-layout-section__textual-display--statusMessage .ux-textspans--BOLD';
+                        let soldText = page$(soldSelector).text().trim();
+                        if (soldText && soldText.startsWith("Dieses Angebot wurde verkauft")) {
+                            console.log(`[EBAY-OFFER-TASK]: Offer "${newOffer.title}" has been sold. Skipping.`);
+                            return; // Skip this offer
                         }
 
-
-// Wait for the viewer count element to be available (increase timeout if necessary)
+                        // Get the viewer count
                         let viewerAmount = 0;
-                        try {
-                            await page.waitForSelector('div[data-testid="ux-section-icon-with-details"] span.ux-textspans', { timeout: 7500 });
-                            const parentHtml = await page.$eval('div[data-testid="ux-section-icon-with-details"]', element => element.innerHTML);
-                            const text = parentHtml.match(/(\d+)\sLeute beobachten/);
-
-                            if (text && text[1]) {
-                                viewerAmount = parseInt(text[1]);
+                        const viewerSelector = 'div[data-testid="ux-section-icon-with-details"] span.ux-textspans';
+                        let viewerText = page$(viewerSelector).closest('div[data-testid="ux-section-icon-with-details"]').html();
+                        if (viewerText) {
+                            const viewerMatch = viewerText.match(/(\d+)\sLeute beobachten/);
+                            if (viewerMatch && viewerMatch[1]) {
+                                viewerAmount = parseInt(viewerMatch[1]);
                             }
-                        } catch (e) {
-                            console.log('Timeout occurred while waiting for viewer count element, proceeding without it.');
                         }
-
                         newOffer.viewerAmount = viewerAmount;
 
-
-
-                        // Wait for the offers (Gebot) element to be available on the page (increase timeout if necessary)
-                        let bidAmount = newOffer.biddingOffersAmount;
-                        try {
-                            await page.waitForSelector('a.ux-action span.ux-textspans--PSEUDOLINK', { timeout: 7500 });
-
-                            // Extract the HTML content of the offer count
-                            const offerText = await page.$eval('a.ux-action span.ux-textspans--PSEUDOLINK', element => element.textContent.trim());
-
-                            // Use a regular expression to match the number of bids (e.g. "1 Gebot")
-                            const match = offerText.match(/(\d+)\s*Gebot/);
-                            if (match && match[1]) {
-                                bidAmount = parseInt(match[1]);
+                        // Get the number of bids (Gebote)
+                        let bidAmount = newOffer.biddingOffersAmount || 0;
+                        const bidSelector = 'a.ux-action span.ux-textspans--PSEUDOLINK';
+                        let bidText = page$(bidSelector).text().trim();
+                        if (bidText) {
+                            const bidMatch = bidText.match(/(\d+)\s*Gebot/);
+                            if (bidMatch && bidMatch[1]) {
+                                bidAmount = parseInt(bidMatch[1]);
                             }
-                        } catch (e) {
-                            console.log('Timeout occurred while waiting for offers element, proceeding without it.');
                         }
-
-// Now, bidAmount will hold the number of offers (Gebote)
                         newOffer.biddingOffersAmount = bidAmount;
 
+                        // Get the bid expiry time if it's a bidding offer
+                        if (newOffer.isBiddingOffer) {
+                            const timerSelector = 'span.ux-timer__text';
+                            let timeString = page$(timerSelector).text().replace('Endet in ', '').trim();
 
-
-                        // Wait for the timer element to be available on the page (increase timeout if necessary)
-                        if(newOffer.isBeddingOffer) {
-
-                            try {
-                                let timeString = '';
-                                await page.waitForSelector('span.ux-timer__text', { timeout: 7500 });
-                                // Extract the HTML content of the time string
-                                timeString = await page.$eval('span.ux-timer__text', element => {
-                                    return element.textContent.replace('Endet in ', '').trim(); // Clean up the string
-                                });
-
-
-                                if (timeString) {
-                                    // Translate the time string into a future date
-                                    newOffer.bidExpiring = this.translateExpiringDate(timeString);
-                                } else {
-                                    newOffer.bidExpiring = new Date(new Date().getFullYear(), 11, 31).toISOString() as any; // Default fallback as 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'
-                                    // .format('YYYY-MM-DDTHH:mm:ss.SSS[Z]')
-                                }
-
-
-                                // Wait for the correct element selector
-                                await page.waitForSelector('span.ux-timer__time-left', { timeout: 7500 });
-
-// Extract the HTML content of the time string
-                                timeString = await page.$eval('span.ux-timer__time-left', element => {
-                                    return element.textContent.trim(); // Clean up the string
-                                });
-
-// Use a regular expression to extract the hours and minutes (e.g., "18:09")
-                                const regex = /(\d{1,2}):(\d{2})/; // Matches time format like "18:09"
-                                const match = timeString.match(regex);
-
-                                if (match) {
-                                    // Extract hours and minutes as numbers
-                                    const hours = parseInt(match[1], 10);  // Hours as number (18)
-                                    const minutes = parseInt(match[2], 10);  // Minutes as number (09)
-
-                                    let current = moment(newOffer.bidExpiring)
-                                    current.set({hour: hours, minute: minutes, seconds: 0, milliseconds: 0})
-                                    newOffer.bidExpiring = current.toDate().toISOString() as any;
-                                } else {
-                                    console.log("No valid time found in the string.");
-                                }
-
-                            } catch (e) {
-                                console.log('Timeout occurred while waiting for timer element, proceeding without it.');
-                                console.error(e)
-                                newOffer.bidExpiring = new Date(new Date().getFullYear(), 11, 31).toISOString() as any;
+                            if (timeString) {
+                                // Translate the time string into a future date
+                                newOffer.bidExpiring = this.translateExpiringDate(timeString);
+                            } else {
+                                newOffer.bidExpiring = new Date(new Date().getFullYear(), 11, 31);
                             }
+
+                            // Extract specific time information if available
+                            const timeLeftSelector = 'span.ux-timer__time-left';
+                            timeString = page$(timeLeftSelector).text().trim();
+
+                            const regex = /(\d{1,2}):(\d{2})/; // Matches time format like "18:09"
+                            const match = timeString.match(regex);
+
+                            if (match) {
+                                const hours = parseInt(match[1], 10);
+                                const minutes = parseInt(match[2], 10);
+
+                                let current = moment(newOffer.bidExpiring);
+                                current.set({ hour: hours, minute: minutes, seconds: 0, milliseconds: 0 });
+                                newOffer.bidExpiring = current.toDate().toISOString();
+                            } else {
+                                console.log("No valid time found in the string.");
+                            }
+                        } else {
+                            newOffer.bidExpiring = new Date(new Date().getFullYear(), 11, 31)
                         }
-                        else {
-                            newOffer.bidExpiring = new Date(new Date().getFullYear(), 11, 31).toISOString() as any;
-                        }
-
-
-
-
                     } catch (error) {
                         console.error(`Failed to load offer page for ${newOffer.title}! Error: ${error}`);
-
-                        // Update bidExpiring to the end of the year if loading fails
-                        newOffer.bidExpiring = new Date(new Date().getFullYear(), 11, 31).toISOString() as any;
+                        // Set bidExpiring to the end of the year if loading fails
+                        newOffer.bidExpiring = new Date(new Date().getFullYear(), 11, 31);
                     }
 
-                    console.log("[EBAY-OFFER-TASK]: Found offer: '" + newOffer.title + "'.")
+                    console.log(`[EBAY-OFFER-TASK]: Found offer: '${newOffer.title}'.`);
                     offers.push(newOffer);
 
                 }
@@ -541,19 +486,21 @@ export class EbayOfferSearchingTask extends Task {
             // Run puppeteer command.
 
             // Enter Ebay.
-            const browser = await puppeteer.launch({headless: true});
-            const page = await browser.newPage();
-            await page.goto("https://www.ebay.de");
+
+            await this.sleep(5000);
+            //const page = await browser.newPage();
+            //await page.goto("https://www.ebay.de");
             console.log("[TASK]: " + this.name + " is running!")
 
             let allOffers = [];
 
             for(let item of this.searchResults) {
                 //await this.searchForItem(page, item);
-                await page.goto(`https://www.ebay.de/sch/i.html?_from=R40&_nkw=${encodeURIComponent(item.title)}&_sacat=0&_sop=${item.sortingListBy}`, { waitUntil: 'networkidle2', timeout: 60000 }); // wait until network is idle
+                let page = await axios.get(`https://www.ebay.de/sch/i.html?_from=R40&_nkw=${encodeURIComponent(item.title)}&_sacat=0&_sop=${item.sortingListBy}`)
+                let $ = cheerio.load(page.data);
 
                 console.log("[EBAY-OFFER-TASK]: Navigated to the search results page sort by " + item.sortingListBy + " for '" + item.title + "'.");
-                let offers = await this.searchResultsByFilter(page, item);
+                let offers = await this.searchResultsByFilter($, item);
 
 // Merge the new offers into allOffers properly by spreading the array
                 allOffers.push(...offers);  // Spread the array into allOffers
@@ -573,8 +520,8 @@ export class EbayOfferSearchingTask extends Task {
 
 
             this.offers = allOffers;
-            await page.close();
-            await browser.close();
+            //await page.close();
+            //await browser.close();
             this.manager.reportSuccessfulTask(this, this.offers);
 
         }).catch((error) => {
