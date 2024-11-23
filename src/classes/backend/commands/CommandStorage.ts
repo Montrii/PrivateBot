@@ -78,7 +78,7 @@ function getCommands() {
                             interaction.reply("Failed to remove search term " + searchValue + ".")
                         }
                     }).catch((error: any) => {
-                        console.error(error)
+                        interaction.reply("Error while attempting to delete '" + searchValue + "' - " + error.response.data.message)
                     })
                 } else {
                     // Handle case where the parameter was not provided (shouldn't happen since it's required)

@@ -54,7 +54,11 @@ export class EbayManager extends Manager {
 
 
         if(task instanceof EbayOfferSearchingTask) {
-            DiscordUpdater.getInstance().updateEbaySearchResults(args[0]);
+            DiscordUpdater.getInstance().updateEbaySearchResults(args[0]).then((result) => {
+                console.log("[TASK]: Updated Discord with Ebay search results.")
+            }).catch((error) => {
+                console.error("[TASK]: Error occurred while updating Discord with Ebay search results: ", error);
+            });
         }
         console.log("[TASK]: " + task.name + " successfully completed!")
     }

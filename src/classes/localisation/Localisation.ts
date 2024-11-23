@@ -45,13 +45,17 @@ export class Localisation {
 
 
             ebayadd: "Open",
+            ebaydescriptionWithBid: "This offer is available on Ebay for a limited time!",
+            ebaydescriptionWithoutBid: "This offer is available for instant purchase on Ebay!",
+            ebayTooLongTitle: "This offer is too long to display!\nHere's the entire name: ",
             ebaytitle: "Offer: ",
             ebaySeller: "Seller: ",
             ebaySellerSold: "Seller Sold: ",
+            ebaySellerRating: "Seller Rating: ",
             ebayPrice: "Price: ",
+            ebayOfferCreated: "Offer Created: ",
             ebayBidExpiring: "Offer Expiring: ",
             ebayBiddingOffersAmount: "Bidding Offers: ",
-            ebaySellerRating: "Seller Rating: ",
             ebayIsBeddingOffer: "Is Bedding Offer: ",
             ebayViewerAmount: "Viewer Amount: ",
 
@@ -90,6 +94,7 @@ export class Localisation {
 
 
             steamtitle: "Spiel ",
+
             steamdlcTitle: "DLC: ",
             steamdescription: "Dieses Spiel ist für eine begrenzte Zeit auf Steam kostenlos!",
             steamdlcDescription: "Dieses DLC ist für eine begrenzte Zeit auf Steam kostenlos!",
@@ -104,13 +109,17 @@ export class Localisation {
 
 
             ebayadd: "Öffnen",
+            ebayTooLongTitle: "Dieses Angebot ist zu lang um es anzuzeigen!\nHier ist der gesamte Name: ",
+            ebaydescriptionWithBid: "Dieses Angebot ist für eine begrenzte Zeit auf Ebay verfügbar!",
+            ebaydescriptionWithoutBid: "Dieses Angebot ist für den Sofortkauf auf Ebay verfügbar!",
             ebaytitle: "Angebot: ",
             ebaySeller: "Verkäufer: ",
             ebaySellerSold: "Verkäufer verkauft: ",
+            ebaySellerRating: "Verkäufer Bewertung: ",
             ebayPrice: "Preis: ",
+            ebayOfferCreated: "Angebot erstellt: ",
             ebayBidExpiring: "Angebot endet: ",
             ebayBiddingOffersAmount: "Bietende: ",
-            ebaySellerRating: "Verkäufer Bewertung: ",
             ebayIsBeddingOffer: "Ist Bietendes Angebot: ",
             ebayViewerAmount: "Anzahl der Betrachter: ",
 

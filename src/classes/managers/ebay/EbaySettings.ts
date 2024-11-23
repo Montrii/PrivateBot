@@ -7,6 +7,7 @@ export class EbaySettings {
     static getEbayDiscordEmbedSettings(): object {
         return {
             color: 0x0099ff,
+            bidColor: 0xfc4e03,
             url: "https://www.montriscript.com",
             author: "This Bot - Ebay Offer Scouter",
             channelToSend: process.env.EBAY_CHANNEL ?? "ebay-offers"
