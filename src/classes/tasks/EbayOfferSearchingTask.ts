@@ -156,6 +156,7 @@ export class EbayOfferSearchingTask extends Task {
             case EbaySortingListBy.NEWEST_OFFER:
                 // only look at offers that are from the last 48 hours.
 
+                // why u dead
                 // @ts-ignore
                 let newerThan48HoursOffers = [];
 
