@@ -475,9 +475,6 @@ export class EbayOfferSearchingTask extends Task {
 
                                 if (endetInMatch) {
                                     newOffer.bidExpiring = this.translateExpiringDate(endetInText, newOffer.offerCreated); // Calculate the expiry date
-                                    console.log(endetInText)
-                                    console.log(`[EBAY-OFFER-TASK]: ${newOffer.offerCreated}.`);
-                                    console.log(`[EBAY-OFFER-TASK]: ${newOffer.bidExpiring}.`);
                                 }
                                 else {
                                     let newDate = new Date(newOffer.offerCreated); // Create a Date object from `offerCreated`
