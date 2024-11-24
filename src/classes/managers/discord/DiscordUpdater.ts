@@ -324,8 +324,24 @@ export class DiscordUpdater {
             try {
                 localisation.setLanguage(guild.preferredLocale);
 
-                const messages = await guild.channelToSendTo.messages.fetch({ limit: 100 });
-                const messagesArray = Array.from(messages.values());
+                const messagesArray: any[] = [];
+                let lastMessageId: string | undefined = undefined;
+
+                // Fetch all messages in the channel
+                while (true) {
+                    // @ts-ignore
+                    const fetchedMessages = await guild.channelToSendTo.messages.fetch({
+                        limit: 100,
+                        ...(lastMessageId && { before: lastMessageId }),
+                    });
+
+                    if (fetchedMessages.size === 0) break;
+
+                    messagesArray.push(...fetchedMessages.values());
+                    lastMessageId = fetchedMessages.last()?.id;
+                }
+
+                console.log(`[DISCORD]: Fetched ${messagesArray.length} messages from channel.`);
 
                 // Track which titles are already processed
                 const processedTitles = new Set<string>();
@@ -348,7 +364,6 @@ export class DiscordUpdater {
                     // Keep only one message for the offer, remove duplicates
                     if (existingMessages.length > 1) {
                         for (let i = 1; i < existingMessages.length; i++) {
-                            // @ts-ignore
                             await existingMessages[i].delete();
                             console.log(`[DISCORD]: Deleted duplicate message for Ebay offer: ${offer.title}`);
                         }
@@ -376,14 +391,10 @@ export class DiscordUpdater {
                 // Delete any messages not associated with a current offer
                 for (const message of messagesArray) {
                     const offerTitle = localisation.get("ebaytitle");
-                    // @ts-ignore
                     const isOfferMessage = message.embeds.some((embed: any) => embed.title && embed.title.startsWith(offerTitle));
 
-                    // @ts-ignore
                     if (isOfferMessage && !uniqueOffers.some((offer) => message.embeds[0]?.title?.trim() === (offerTitle + offer.title).trim())) {
-                        // @ts-ignore
                         await message.delete();
-                        // @ts-ignore
                         console.log(`[DISCORD]: Deleted obsolete Ebay offer message: ${message.embeds[0]?.title}`);
                     }
                 }
@@ -395,6 +406,7 @@ export class DiscordUpdater {
             }
         }
     }
+
 
 
 
