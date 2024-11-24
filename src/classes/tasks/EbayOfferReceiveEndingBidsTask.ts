@@ -19,7 +19,7 @@ export class EbayOfferReceiveEndingBidsTask extends Task {
                 if(response.status !== 200) {
                     throw new Error("Response status was not 200. It was: " + response.status)
                 }
-                let results: any[] = [];
+                let results: any[] = response.data;
                 this.manager.reportSuccessfulTask(this, results);
             })
         }).catch((error) => {

@@ -221,7 +221,15 @@ export class DiscordUpdater {
             .setURL(offer.link!)
 
         // Add the fields to the embed
-        gameEmbed.addFields(({ name: localisation.get("ebayOfferCreated"), value: this.formatDateIntoGermanDate(offer.offerCreated?.toISOString() as string), inline: false } as any))
+        // @ts-ignore
+
+        if(typeof(offer.offerCreated) == "string") {
+            gameEmbed.addFields(({ name: localisation.get("ebayOfferCreated"), value: this.formatDateIntoGermanDate(offer.offerCreated as string), inline: false } as any))
+        }
+        else {
+            gameEmbed.addFields(({ name: localisation.get("ebayOfferCreated"), value: this.formatDateIntoGermanDate(offer.offerCreated?.toISOString() as string), inline: false } as any))
+        }
+
 
         gameEmbed.addFields(({ name: localisation.get("ebayPrice"), value: offer.price ?? 0 + "", inline: false } as any))
 
