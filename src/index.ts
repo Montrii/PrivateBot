@@ -6,7 +6,6 @@ import "dotenv/config";
 * Custom imports from myself.
 *
  */
-import {ConsoleManager} from "./classes/backend/ConsoleManager";
 import "./classes/backend/ErrorHandling"
 
 // Managers (wrappers for all tasks requires to fulfill result)
