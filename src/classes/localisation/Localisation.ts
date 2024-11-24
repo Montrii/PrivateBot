@@ -44,7 +44,7 @@ export class Localisation {
 
 
 
-            ebayadd: "Open",
+            ebayadd: "View",
             ebaydescriptionWithBid: "This offer is available on Ebay for a limited time!",
             ebaydescriptionWithoutBid: "This offer is available for instant purchase on Ebay!",
             ebayTooLongTitle: "This offer is too long to display!\nHere's the entire name: ",
@@ -110,7 +110,7 @@ export class Localisation {
             steamageRestriction: "Altersbeschränkung: ",
 
 
-            ebayadd: "Öffnen",
+            ebayadd: "Anschauen",
             ebayTooLongTitle: "Dieses Angebot ist zu lang um es anzuzeigen!\nHier ist der gesamte Name: ",
             ebaydescriptionWithBid: "Dieses Angebot ist für eine begrenzte Zeit auf Ebay verfügbar!",
             ebaydescriptionWithoutBid: "Dieses Angebot ist für den Sofortkauf auf Ebay verfügbar!",
