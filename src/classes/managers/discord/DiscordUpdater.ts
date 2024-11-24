@@ -293,8 +293,12 @@ export class DiscordUpdater {
 
         const guilds = await guildInformer.getGuildsWithChannelName((ebaySettings as any).channelToSend);
 
+        // Remove duplicate offers (based on title)
+        const uniqueOffers = Array.from(new Map(offers.map((offer) => [offer.title, offer])).values());
+
         // Sort offers in descending order based on the offerCreated ISO string
-        offers.sort((a, b) => new Date(a.offerCreated as any).getTime() - new Date(b.offerCreated as any).getTime());
+        // @ts-ignore
+        uniqueOffers.sort((a, b) => new Date(a.offerCreated).getTime() - new Date(b.offerCreated).getTime());
 
         for (const guild of guilds) {
             try {
@@ -303,12 +307,16 @@ export class DiscordUpdater {
                 const messages = await guild.channelToSendTo.messages.fetch({ limit: 100 });
                 const messagesArray = Array.from(messages.values());
 
-                // Loop through each offer and check for updates or deletions
-                for (const offer of offers) {
-                    const offerTitle = localisation.get("ebaytitle") + offer.title!.trim();
-                    let titleMessage = localisation.get("ebayTooLongTitle") + offer.title!.trim();
+                // Track which titles are already processed
+                const processedTitles = new Set<string>();
 
-                    const existingMessage = messagesArray.find((message: any) => {
+                // Loop through each unique offer
+                for (const offer of uniqueOffers) {
+                    const offerTitle = localisation.get("ebaytitle") + offer.title!.trim();
+                    const titleMessage = localisation.get("ebayTooLongTitle") + offer.title!.trim();
+
+                    // Find existing messages for this offer
+                    const existingMessages = messagesArray.filter((message: any) => {
                         const messageContent = message.content.trim();
                         const embedTitles = message.embeds.map((embed: any) => embed.title?.trim());
 
@@ -317,40 +325,46 @@ export class DiscordUpdater {
                             messageContent.toLowerCase().includes(titleMessage.toLowerCase());
                     });
 
+                    // Keep only one message for the offer, remove duplicates
+                    if (existingMessages.length > 1) {
+                        for (let i = 1; i < existingMessages.length; i++) {
+                            // @ts-ignore
+                            await existingMessages[i].delete();
+                            console.log(`[DISCORD]: Deleted duplicate message for Ebay offer: ${offer.title}`);
+                        }
+                    }
+
+                    const existingMessage = existingMessages[0];
+
                     // If the message already exists, update it
                     if (existingMessage) {
-                        const offerExists = offers.some((game) => game.title === offer.title);
-                        if (offerExists) {
+                        if (!processedTitles.has(offer.title)) {
                             await this.updateEbayOfferToChannel(existingMessage, guild, ebaySettings, offer, localisation);
                             console.log("[DISCORD]: Updated Ebay offer: " + offer.title);
-                        } else {
-                            // @ts-ignore
-                            await existingMessage.delete();
-                            console.log("[DISCORD]: Deleted obsolete Ebay offer: " + offer.title);
+                            processedTitles.add(offer.title);
                         }
                     } else {
                         // If no message exists for this offer, create a new one
-                        const offerExists = offers.some((game) => game.title === offer.title);
-                        if (offerExists) {
+                        if (!processedTitles.has(offer.title)) {
                             await this.addEbayOfferToChannel(guild, ebaySettings, offer, localisation);
                             console.log("[DISCORD]: Added new Ebay offer: " + offer.title);
+                            processedTitles.add(offer.title);
                         }
                     }
                 }
 
                 // Delete any messages not associated with a current offer
                 for (const message of messagesArray) {
-
                     const offerTitle = localisation.get("ebaytitle");
                     // @ts-ignore
                     const isOfferMessage = message.embeds.some((embed: any) => embed.title && embed.title.startsWith(offerTitle));
 
                     // @ts-ignore
-                    if (isOfferMessage && !offers.some((game) => game.title === message.embeds[0].title?.replace(offerTitle, '').trim())) {
+                    if (isOfferMessage && !uniqueOffers.some((offer) => message.embeds[0]?.title?.trim() === (offerTitle + offer.title).trim())) {
                         // @ts-ignore
                         await message.delete();
                         // @ts-ignore
-                        console.log("[DISCORD]: Deleted obsolete Ebay offer: " + message.embeds[0].title);
+                        console.log(`[DISCORD]: Deleted obsolete Ebay offer message: ${message.embeds[0]?.title}`);
                     }
                 }
 
@@ -361,6 +375,7 @@ export class DiscordUpdater {
             }
         }
     }
+
 
 
     async sleep(ms: number) {
