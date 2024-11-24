@@ -222,7 +222,6 @@ export class DiscordUpdater {
 
         // Add the fields to the embed
         // @ts-ignore
-
         if(typeof(offer.offerCreated) == "string") {
             gameEmbed.addFields(({ name: localisation.get("ebayOfferCreated"), value: this.formatDateIntoGermanDate(offer.offerCreated as string), inline: false } as any))
         }
