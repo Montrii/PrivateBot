@@ -1,11 +1,19 @@
 export class EbayOffer {
+    // @ts-ignore
     private _title: string;
+    // @ts-ignore
     private _image: string;
+    // @ts-ignore
     private _link: string;
+    // @ts-ignore
     private _price: string;
+    // @ts-ignore
     private _seller: string;
+    // @ts-ignore
     private _sellerSold: number;
+    // @ts-ignore
     private _sellerRating: number; // New field for seller rating
+    // @ts-ignore
     private _isBeddingOffer: boolean;
     private _offerCreated?: Date;  // Renamed from bidExpiring to offerCreated
     private _bidExpiring?: Date;  // New variable for bid expiration date

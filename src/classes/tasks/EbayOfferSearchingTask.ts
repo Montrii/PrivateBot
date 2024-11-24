@@ -4,8 +4,6 @@ import {EbayManager} from "../managers/ebay/EbayManager";
 import axios from "axios";
 import puppeteer, {Page} from "puppeteer";
 import cheerio from "cheerio";
-import moment from "moment";
-import fs from "fs";
 
 // A wrapper class for the Ebay offer search item.
 class EbayOfferSearchItem {
@@ -72,6 +70,7 @@ export class EbayOfferSearchingTask extends Task {
         // Wait for the input element using a more specific selector
         await page.click('input.gh-tb.ui-autocomplete-input[aria-label="Bei eBay finden"]');
 
+        // @ts-ignore
         let inputValue = await page.$eval('input.gh-tb.ui-autocomplete-input[aria-label="Bei eBay finden"]', el => el.value);
 
         if(inputValue !== null && inputValue !== "") {
@@ -79,6 +78,7 @@ export class EbayOfferSearchingTask extends Task {
             await page.click('input.gh-tb.ui-autocomplete-input[aria-label="Bei eBay finden"]');
 
             // Clear the input field by setting its value to an empty string
+            // @ts-ignore
             await page.$eval('input.gh-tb.ui-autocomplete-input[aria-label="Bei eBay finden"]', el => el.value = '');
 
             // Optionally log that the field was cleared
@@ -254,6 +254,7 @@ export class EbayOfferSearchingTask extends Task {
             case EbaySortingListBy.NEWEST_OFFER:
                 // only look at offers that are from the last 48 hours.
 
+                // @ts-ignore
                 let newerThan48HoursOffers = [];
 
 
@@ -268,6 +269,7 @@ export class EbayOfferSearchingTask extends Task {
                         if (listingDate) {
                             // Calculate if the listing date is within the last 48 hours
                             const now = new Date();
+                            // @ts-ignore
                             const hoursDiff = Math.floor(Math.abs(now - listingDate) / 36e5); // Difference in hours
 
                             // If the date is within 48 hours, add it to the filteredLis array
@@ -542,6 +544,7 @@ export class EbayOfferSearchingTask extends Task {
                 let offers = await this.searchResultsByFilter($, item);
 
 // Merge the new offers into allOffers properly by spreading the array
+                // @ts-ignore
                 allOffers.push(...offers);  // Spread the array into allOffers
 
 // Sort allOffers by offeringExpiring date closest to now

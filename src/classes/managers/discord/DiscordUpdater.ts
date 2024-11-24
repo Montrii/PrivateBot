@@ -5,7 +5,7 @@ import {GuildInformer} from "../../backend/GuildInformer";
 import {SteamSettings} from "../steam/SteamSettings";
 
 const { ButtonStyle } = require('discord.js');
-import {ButtonBuilder, EmbedBuilder, ActionRowBuilder} from "discord.js";
+import {ButtonBuilder, EmbedBuilder, ActionRowBuilder, Message} from "discord.js";
 import {EbayOffer} from "../ebay/EbayOffer";
 import {EbaySettings} from "../ebay/EbaySettings";
 
@@ -221,7 +221,7 @@ export class DiscordUpdater {
             .setURL(offer.link!)
 
         // Add the fields to the embed
-        gameEmbed.addFields(({ name: localisation.get("ebayOfferCreated"), value: this.formatDateIntoGermanDate(offer.offerCreated?.toISOString()), inline: false } as any))
+        gameEmbed.addFields(({ name: localisation.get("ebayOfferCreated"), value: this.formatDateIntoGermanDate(offer.offerCreated?.toISOString() as string), inline: false } as any))
 
         gameEmbed.addFields(({ name: localisation.get("ebayPrice"), value: offer.price ?? 0 + "", inline: false } as any))
 
@@ -234,7 +234,7 @@ export class DiscordUpdater {
         if(offer.isBeddingOffer) {
             gameEmbed.setDescription(localisation.get("ebaydescriptionWithBid") as string)
 
-            gameEmbed.addFields(({name: localisation.get("ebayBidExpiring"), value: this.formatDateIntoGermanDate(offer.bidExpiring), inline: true} as any))
+            gameEmbed.addFields(({name: localisation.get("ebayBidExpiring"), value: this.formatDateIntoGermanDate(offer.bidExpiring as any), inline: true} as any))
             gameEmbed.addFields(({name: localisation.get("ebayBiddingOffersAmount"), value: offer.biddingOffersAmount + "", inline: true} as any))
 
             gameEmbed.setColor(ebaySettings.bidColor)
@@ -258,10 +258,10 @@ export class DiscordUpdater {
         const ebaySettings = EbaySettings.getEbayDiscordEmbedSettings() as EbaySettings;
         const localisation = new Localisation();
 
-        const guilds = await guildInformer.getGuildsWithChannelName(ebaySettings.bidExpiringChannelToSend);
+        const guilds = await guildInformer.getGuildsWithChannelName((ebaySettings as any).bidExpiringChannelToSend);
 
         // Sort offers in descending order based on the offerCreated ISO string
-        offers.sort((a, b) => new Date(b.bidExpiring).getTime() - new Date(a.bidExpiring).getTime());
+        offers.sort((a, b) => new Date(b.bidExpiring as any).getTime() - new Date(a.bidExpiring as any).getTime());
 
         for (const guild of guilds) {
             try {
@@ -270,7 +270,7 @@ export class DiscordUpdater {
 
                 // Delete all messages in the channel
                 const messages = await guild.channelToSendTo.messages.fetch({ limit: 100 });
-                await Promise.all(messages.map((msg) => msg.delete()));
+                await Promise.all(messages.map((msg: Message) => msg.delete()));
 
                 // Loop through offers and send messages
                 for (const offer of offers) {
@@ -291,10 +291,10 @@ export class DiscordUpdater {
         const ebaySettings = EbaySettings.getEbayDiscordEmbedSettings() as EbaySettings;
         const localisation = new Localisation();
 
-        const guilds = await guildInformer.getGuildsWithChannelName(ebaySettings.channelToSend);
+        const guilds = await guildInformer.getGuildsWithChannelName((ebaySettings as any).channelToSend);
 
         // Sort offers in descending order based on the offerCreated ISO string
-        offers.sort((a, b) => new Date(a.offerCreated).getTime() - new Date(b.offerCreated).getTime());
+        offers.sort((a, b) => new Date(a.offerCreated as any).getTime() - new Date(b.offerCreated as any).getTime());
 
         for (const guild of guilds) {
             try {
@@ -313,7 +313,7 @@ export class DiscordUpdater {
                         const embedTitles = message.embeds.map((embed: any) => embed.title?.trim());
 
                         // Check if the offer is present in the message (using title or embed)
-                        return embedTitles.some((embedTitle) => embedTitle && embedTitle.toLowerCase().includes(offerTitle.toLowerCase())) ||
+                        return embedTitles.some((embedTitle: any) => embedTitle && embedTitle.toLowerCase().includes(offerTitle.toLowerCase())) ||
                             messageContent.toLowerCase().includes(titleMessage.toLowerCase());
                     });
 
@@ -324,6 +324,7 @@ export class DiscordUpdater {
                             await this.updateEbayOfferToChannel(existingMessage, guild, ebaySettings, offer, localisation);
                             console.log("[DISCORD]: Updated Ebay offer: " + offer.title);
                         } else {
+                            // @ts-ignore
                             await existingMessage.delete();
                             console.log("[DISCORD]: Deleted obsolete Ebay offer: " + offer.title);
                         }
@@ -339,17 +340,23 @@ export class DiscordUpdater {
 
                 // Delete any messages not associated with a current offer
                 for (const message of messagesArray) {
+
                     const offerTitle = localisation.get("ebaytitle");
+                    // @ts-ignore
                     const isOfferMessage = message.embeds.some((embed: any) => embed.title && embed.title.startsWith(offerTitle));
 
+                    // @ts-ignore
                     if (isOfferMessage && !offers.some((game) => game.title === message.embeds[0].title?.replace(offerTitle, '').trim())) {
+                        // @ts-ignore
                         await message.delete();
+                        // @ts-ignore
                         console.log("[DISCORD]: Deleted obsolete Ebay offer: " + message.embeds[0].title);
                     }
                 }
 
                 console.log("[DISCORD]: Finished updating Ebay offers for Guild: " + guild.name);
             } catch (error) {
+                // @ts-ignore
                 console.error("[DISCORD]: Error while updating Ebay offers for guild: " + guild.name + "\nError: " + error.message + " \n" + error.stack);
             }
         }

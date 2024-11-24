@@ -68,6 +68,7 @@ export class CommandRegister {
                             .setName(command.getName())
                             .setDescription(command.adjustCommandForGuild(guild).getDescription());
 
+                        // @ts-ignore
                         // Add parameters to the command
                         command.parameters.forEach((param) => {
                             // Add the parameters to the command using proper types (e.g., STRING, INTEGER)
