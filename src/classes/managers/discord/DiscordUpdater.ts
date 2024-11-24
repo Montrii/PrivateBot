@@ -244,14 +244,27 @@ export class DiscordUpdater {
             gameEmbed.setColor(ebaySettings.color)
         }
 
+        // Extract the base URL from the offer.link and split it by "_", then use the first part (up to the eBay item ID)
+        const baseLink = offer.link?.split('_')[0] ?? offer.link; // Safe fallback to offer.link if no "_" found
+
+        // Create the button for the embed
+        const addButton = new ButtonBuilder()
+            .setLabel(localisation.get("ebayadd"))  // Set the button label
+            .setStyle(ButtonStyle.Link)
+            .setURL(baseLink);  // Set the URL to the base link
+
+        // Add the button to the action row
+        actionRow.addComponents(addButton);
+
         // Return the embed and the optional message with the full title if necessary
-        const result: any = { embeds: [gameEmbed] };
+        const result: any = { embeds: [gameEmbed], components: [actionRow] };
         if (titleMessage) {
             result.content = titleMessage;  // Attach the full title as normal text if truncated
         }
 
         return result;
     }
+
 
     public async addBidExpiringOffers(offers: EbayOffer[]) {
         const guildInformer = GuildInformer.getInstance();
