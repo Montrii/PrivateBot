@@ -231,7 +231,7 @@ export class EbayOfferSearchingTask extends Task {
             targetDate.setSeconds(0, 0);
         }
 
-        // TODO: missing an hour.
+        // TODO: missing an hour -> make sure this is only added on prod
 
         targetDate.setHours(targetDate.getHours() + 1);
         // Return the future date in ISO format (local time)
