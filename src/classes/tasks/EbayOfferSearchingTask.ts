@@ -4,6 +4,8 @@ import {EbayManager} from "../managers/ebay/EbayManager";
 import axios from "axios";
 import puppeteer, {Page} from "puppeteer";
 import cheerio from "cheerio";
+import * as path from "node:path";
+import * as fs from "node:fs";
 
 // A wrapper class for the Ebay offer search item.
 class EbayOfferSearchItem {
@@ -32,109 +34,6 @@ export class EbayOfferSearchingTask extends Task {
         this.manager = manager;
         this.offers = [];
 
-    }
-
-    fillSearchResults()
-    {
-        //this.searchResults.push(new EbayOfferSearchItem("xbox", EbaySortingListBy.NEWEST_OFFER));
-        //this.searchResults.push(new EbayOfferSearchItem("pokemon rot ovp", EbaySortingListBy.NEWEST_OFFER));
-        //this.searchResults.push(new EbayOfferSearchItem("pokemon blau ovp", EbaySortingListBy.NEWEST_OFFER));
-        //this.searchResults.push(new EbayOfferSearchItem("pokemon gelb ovp", EbaySortingListBy.NEWEST_OFFER));
-        this.searchResults.push(new EbayOfferSearchItem("xbox classic ovp", EbaySortingListBy.NEWEST_OFFER));
-        //this.searchResults.push(new EbayOfferSearchItem("pokemon blau ovp", EbaySortingListBy.NEWEST_OFFER));
-    }
-
-    async waitOnEbaySearchBar(page: Page) {
-        // Wait for the input element using a more specific selector
-        await page.waitForSelector('input.gh-tb.ui-autocomplete-input[aria-label="Bei eBay finden"]', {
-            timeout: 20000 // Optional: specify a timeout in milliseconds (default is 30 seconds)
-        });
-
-
-        // Wait for either the input or the button with value="Finden"
-        await page.waitForSelector('input[value="Finden"], button[value="Finden"]', {
-            timeout: 20000  // Timeout after 20 seconds if neither is found
-        });
-
-
-
-    }
-
-    async searchForItem(page: Page, item: EbayOfferSearchItem) {
-        await new Promise(resolve => setTimeout(resolve, 5000)); // Random wait between 300 and 800 ms for variability
-        await this.waitOnEbaySearchBar(page)
-
-
-        // Store the current URL before clicking (for comparison)
-        const currentUrl = page.url();
-        // Wait for the input element using a more specific selector
-        await page.click('input.gh-tb.ui-autocomplete-input[aria-label="Bei eBay finden"]');
-
-        // @ts-ignore
-        let inputValue = await page.$eval('input.gh-tb.ui-autocomplete-input[aria-label="Bei eBay finden"]', el => el.value);
-
-        if(inputValue !== null && inputValue !== "") {
-        // Click the input field to focus it
-            await page.click('input.gh-tb.ui-autocomplete-input[aria-label="Bei eBay finden"]');
-
-            // Clear the input field by setting its value to an empty string
-            // @ts-ignore
-            await page.$eval('input.gh-tb.ui-autocomplete-input[aria-label="Bei eBay finden"]', el => el.value = '');
-
-            // Optionally log that the field was cleared
-            console.log("[EBAY-OFFER-TASK]: '" + inputValue + "' has been cleared.");
-
-        }
-
-        // Type the item name character by character with a delay to mimic human typing
-        for (let char of item.title) {
-            await page.keyboard.type(char, {delay: Math.random() * (300 - 100) + 100}); // Random delay between 100 and 300 ms per character
-        }
-
-        // Click the "Finden" button
-        await page.waitForSelector('input[value="Finden"], button[value="Finden"]', {
-            timeout: 20000  // Timeout after 20 seconds if neither is found
-        });
-
-        await page.click('input[value="Finden"], button[value="Finden"]');
-
-
-        // Wait for the page URL to change up to 20 seconds
-        const timeout = 20000; // 20 seconds timeout
-        const startTime = Date.now();
-        let newUrl = currentUrl;
-
-        while (Date.now() - startTime < timeout) {
-            // Wait a bit before checking the URL again
-            await new Promise(resolve => setTimeout(resolve, 500)); // Random wait between 300 and 800 ms for variability
-
-            newUrl = page.url();
-
-            if (currentUrl !== newUrl) {
-
-
-                // Optionally, you can add random wait for variability
-                await new Promise(resolve => setTimeout(resolve, Math.random() * (2000 - 1000) + 300)); // Random wait between 300 and 800 ms for variability
-
-
-                console.log("[EBAY-OFFER-TASK]: '" + item.title + "' has been entered into the search bar.")
-                console.log(`[EBAY-OFFER-TASK]: Page navigated successfully from ${currentUrl} to ${newUrl}`);
-
-
-                let finishedUrl = `https://www.ebay.de/sch/i.html?_from=R40&_nkw=${encodeURIComponent(item.title)}&_sacat=0&_sop=${item.sortingListBy}`;
-                await page.goto(finishedUrl)
-
-                console.log("[EBAY-OFFER-TASK]: Navigated to the search results page sort by " + item.sortingListBy + " for '" + item.title + "'.");
-
-                return; // Exit early if URL changes
-            }
-        }
-
-        // If the URL didn't change within the timeout period
-        console.log('Page did not navigate within 20 seconds.');
-
-        // Recursively call the function again
-        this.searchForItem(page, item);
     }
 
 
@@ -261,21 +160,27 @@ export class EbayOfferSearchingTask extends Task {
                 let newerThan48HoursOffers = [];
 
 
-                // get all lis under 48 hours ago
+                // Select all <li> elements in the 'srp-river-results' container
                 $('li').each((index, liElement) => {
+                    // Check if this is the REWRITE_START li element
+                    if ($(liElement).hasClass('srp-river-answer--REWRITE_START')) {
+                        // Stop processing further <li> elements
+                        return false; // This breaks out of the .each() loop
+                    }
+
                     // Get the listing date from the span with the class 's-item__listingDate'
                     const listingDateText = $(liElement).find('.s-item__listingDate .BOLD').text().trim();
 
                     if (listingDateText) {
                         // Parse the date in the format "16. Nov. 17:10"
-                        const listingDate = this.parseDate(listingDateText);
+                        const listingDate = this.parseDate(listingDateText); // Replace with your parseDate function
                         if (listingDate) {
                             // Calculate if the listing date is within the last 48 hours
                             const now = new Date();
                             // @ts-ignore
                             const hoursDiff = Math.floor(Math.abs(now - listingDate) / 36e5); // Difference in hours
 
-                            // in the last week.
+                            // If within the last 48 hours, add to the array
                             if (hoursDiff <= 148) {
                                 newerThan48HoursOffers.push(liElement);
                             }
