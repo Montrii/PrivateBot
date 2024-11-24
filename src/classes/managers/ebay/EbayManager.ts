@@ -33,7 +33,7 @@ export class EbayManager extends Manager {
     constructor() {
         super("EbayManager");
         this.ebayOfferSearchResultsTask = this.registerTask(new EbayOfferSearchResultsTask(this) as Task, 60) as EbayOfferSearchResultsTask;
-        this.ebaySearchingOfferTask = this.registerTask(new EbayOfferSearchingTask(this) as Task, 420) as EbayOfferSearchingTask;
+        this.ebaySearchingOfferTask = this.registerTask(new EbayOfferSearchingTask(this) as Task, 300) as EbayOfferSearchingTask;
         this.ebayTasks.fill(this.ebaySearchingOfferTask);
         this.ebayTasks.fill(this.ebayOfferSearchResultsTask);
     }

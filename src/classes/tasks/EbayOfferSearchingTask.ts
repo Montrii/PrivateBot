@@ -138,8 +138,7 @@ export class EbayOfferSearchingTask extends Task {
     }
 
 
-    // Helper function to parse the date
-    private  parseDate(dateString: string) {
+    private parseDate(dateString: string) {
         // The format is like "16. Nov. 17:10" (day, month, time)
         const dateParts = dateString.split(' ');
 
@@ -161,51 +160,85 @@ export class EbayOfferSearchingTask extends Task {
         // Parse the time (e.g., "17:10") into hours and minutes
         const [hours, minutes] = timeStr.split(':').map(num => parseInt(num, 10));
 
-        // Create a Date object with the current year, parsed month, day, and time
+        // Create a Date object using the current year, parsed month, day, and time
         const parsedDate = new Date(currentYear, month, day, hours, minutes);
 
         return parsedDate;
     }
 
 
-    // Function to convert the extracted time into a future Date object
-    private translateExpiringDate(timeString) {
-        const now = moment.utc();  // Use UTC directly
 
-        // Extract days, hours, and the target weekday and time
+    // Function to convert the extracted time into a future Date object
+    private translateExpiringDate(timeString: string, offerCreated: Date) {
+        // Get the current time in the local time zone
+        const now = new Date(); // Local current date and time
+
+        // Extract days, hours, weekday, and specific time from the timeString
         const dayMatch = timeString.match(/(\d+)\s*T/);  // Match days (e.g., "2 T")
         const hourMatch = timeString.match(/(\d+)\s*Std/);  // Match hours (e.g., "17 Std")
         const weekdayMatch = timeString.match(/(Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag)/);  // Match weekday (e.g., "Donnerstag")
         const timeMatch = timeString.match(/(\d{2}):(\d{2})/);  // Match time (e.g., "17:10")
 
-        // Calculate the future time
+        // Start with a targetDate equal to now
+        let targetDate = new Date(now);
+
+        // Calculate days and hours if present
         let days = dayMatch ? parseInt(dayMatch[1], 10) : 0;
         let hours = hourMatch ? parseInt(hourMatch[1], 10) : 0;
 
-        // Add days and hours to the current time (in UTC)
-        let targetDate = now.add(days, 'days').add(hours, 'hours');
+        // Add days and hours to the targetDate
+        targetDate.setDate(targetDate.getDate() + days);
+        targetDate.setHours(targetDate.getHours() + hours);
 
-        // If a specific weekday is provided, adjust the date to the correct weekday
+        // If specific weekday is provided, adjust the date to the next occurrence of the given weekday
         if (weekdayMatch) {
-            const weekdayNames = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
+            const weekdayNames = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
             const targetWeekday = weekdayNames.indexOf(weekdayMatch[0]);
 
-            // Adjust to the next occurrence of the given weekday
-            const currentWeekday = targetDate.day();
-            const diffDays = targetWeekday - currentWeekday;
-            targetDate.add(diffDays, 'days');
+            // Adjust to the next occurrence of the target weekday
+            const currentWeekday = now.getDay();
+            let diffDays = targetWeekday - currentWeekday;
+
+            // If the target weekday is in the past or today, move to the next week
+            if (diffDays <= 0) {
+                diffDays += 7;
+            }
+            targetDate.setDate(targetDate.getDate() + diffDays);
         }
 
-        // Set the specific time (e.g., "17:10")
+        // If a specific time is provided, set the hours and minutes
         if (timeMatch) {
-            targetDate.hour(parseInt(timeMatch[1], 10));
-            targetDate.minute(parseInt(timeMatch[2], 10));
-            targetDate.second(0);  // Set seconds to 0
+            targetDate.setHours(parseInt(timeMatch[1], 10));
+            targetDate.setMinutes(parseInt(timeMatch[2], 10));
         }
 
-        // Return the future date in UTC format (ISO 8601)
-        return targetDate.format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+        // if targetDate.getMinutes() is smaller than offerCreated.getMinutes(), round to offerCreated.getMinutes()
+        // if targetDate.getMinutes() is bigger than offerCreated.getMinutes(), round to the next hour (from 16:26:00 to 17:00:00)
+
+
+        // Adjust minutes based on offerCreated
+        let createdMinutes = offerCreated.getMinutes();
+        let targetMinutes = targetDate.getMinutes();
+
+        if (targetMinutes < createdMinutes) {
+            // Set targetDate's minutes to match offerCreated's minutes
+            targetDate.setMinutes(createdMinutes);
+            targetDate.setSeconds(0, 0);
+        } else if (targetMinutes > createdMinutes) {
+            // Round targetDate to the next hour
+            targetDate.setMinutes(createdMinutes);
+            targetDate.setHours(targetDate.getHours() + 1);
+            targetDate.setSeconds(0, 0);
+        }
+
+        // Return the future date in ISO format (local time)
+        return targetDate; // Keeps it in local time
     }
+
+
+
+
+
 
     async searchResultsByFilter(cheerioPage: any, filter: EbayOfferSearchItem) {
         let offers: any[] = [];
@@ -408,7 +441,7 @@ export class EbayOfferSearchingTask extends Task {
                         const viewerSelector = 'div[data-testid="ux-section-icon-with-details"] span.ux-textspans';
                         let viewerText = page$(viewerSelector).closest('div[data-testid="ux-section-icon-with-details"]').html();
                         if (viewerText) {
-                            const viewerMatch = viewerText.match(/(\d+)\sLeute beobachten/);
+                            const viewerMatch = viewerText.match(/(\d+)\s(?:Leute\sbeobachten|Person\sbeobachtet)/);
                             if (viewerMatch && viewerMatch[1]) {
                                 viewerAmount = parseInt(viewerMatch[1]);
                             }
@@ -428,36 +461,46 @@ export class EbayOfferSearchingTask extends Task {
                         newOffer.biddingOffersAmount = bidAmount;
 
                         // Get the bid expiry time if it's a bidding offer
-                        if (newOffer.isBiddingOffer) {
-                            const timerSelector = 'span.ux-timer__text';
-                            let timeString = page$(timerSelector).text().replace('Endet in ', '').trim();
+                        if (newOffer.isBeddingOffer) {
 
-                            if (timeString) {
-                                // Translate the time string into a future date
-                                newOffer.bidExpiring = this.translateExpiringDate(timeString);
-                            } else {
-                                newOffer.bidExpiring = new Date(new Date().getFullYear(), 11, 31);
+                            // Selector for the parent element containing the timer details
+                            const timerSelector = 'span.ux-timer[data-testid="ux-timer"]';
+
+// Ensure the element exists
+                            if (page$(timerSelector).length > 0) {
+                                // Extract "Endet in" details (e.g., "6 T 19 Std")
+                                const endetInText = page$(`${timerSelector} span.ux-timer__text`).text().trim();
+
+                                const endetInMatch = endetInText.match("Endet in");
+
+                                if (endetInMatch) {
+                                    newOffer.bidExpiring = this.translateExpiringDate(endetInText, newOffer.offerCreated); // Calculate the expiry date
+                                    console.log(endetInText)
+                                    console.log(`[EBAY-OFFER-TASK]: ${newOffer.offerCreated}.`);
+                                    console.log(`[EBAY-OFFER-TASK]: ${newOffer.bidExpiring}.`);
+                                }
+                                else {
+                                    let newDate = new Date(newOffer.offerCreated); // Create a Date object from `offerCreated`
+
+                                    // Set the expiration date to December 31 of the current year
+                                    newDate.setFullYear(new Date().getFullYear(), 11, 31); // 11 corresponds to December
+
+                                    // Adjust for the local timezone offset
+                                    const localOffset = newDate.getTimezoneOffset() * 60000; // Convert offset to milliseconds
+                                    newOffer.bidExpiring = new Date(newDate.getTime() - localOffset); // Adjust to local time zone
+                                }
+
                             }
 
-                            // Extract specific time information if available
-                            const timeLeftSelector = 'span.ux-timer__time-left';
-                            timeString = page$(timeLeftSelector).text().trim();
-
-                            const regex = /(\d{1,2}):(\d{2})/; // Matches time format like "18:09"
-                            const match = timeString.match(regex);
-
-                            if (match) {
-                                const hours = parseInt(match[1], 10);
-                                const minutes = parseInt(match[2], 10);
-
-                                let current = moment(newOffer.bidExpiring);
-                                current.set({ hour: hours, minute: minutes, seconds: 0, milliseconds: 0 });
-                                newOffer.bidExpiring = current.toDate().toISOString();
-                            } else {
-                                console.log("No valid time found in the string.");
-                            }
                         } else {
-                            newOffer.bidExpiring = new Date(new Date().getFullYear(), 11, 31)
+                            let newDate = new Date(newOffer.offerCreated); // Create a Date object from `offerCreated`
+
+                            // Set the expiration date to December 31 of the current year
+                            newDate.setFullYear(new Date().getFullYear(), 11, 31); // 11 corresponds to December
+
+                            // Adjust for the local timezone offset
+                            const localOffset = newDate.getTimezoneOffset() * 60000; // Convert offset to milliseconds
+                            newOffer.bidExpiring = new Date(newDate.getTime() - localOffset); // Adjust to local time zone
                         }
                     } catch (error) {
                         console.error(`Failed to load offer page for ${newOffer.title}! Error: ${error}`);
@@ -465,9 +508,8 @@ export class EbayOfferSearchingTask extends Task {
                         newOffer.bidExpiring = new Date(new Date().getFullYear(), 11, 31);
                     }
 
-                    console.log(`[EBAY-OFFER-TASK]: Found offer: '${newOffer.title}'.`);
                     offers.push(newOffer);
-
+                    console.log(`[EBAY-OFFER-TASK]: Detected offer: '${newOffer.title}'.`);
                 }
                 break;
             default:
