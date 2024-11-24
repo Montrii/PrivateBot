@@ -28,6 +28,7 @@ export class GuildInformer {
         this.client = client;
     }
 
+    // change
 
     public getAllGuilds(): Collection<Snowflake, Guild> {
         return this.client.guilds.cache;
