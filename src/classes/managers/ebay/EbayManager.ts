@@ -88,38 +88,11 @@ export class EbayManager extends Manager {
     }
 
     async saveOffersToServer(offers: EbayOffer[]) {
-        // Add 1 hour to each offer's bidExpiring
-        offers.forEach((offer) => {
-            if (offer.bidExpiring) {
-                // Parse the bidExpiring time as a Date object
-                const bidExpiringDate = new Date(offer.bidExpiring);
-
-                // Add 1 hour to the bidExpiring time
-                bidExpiringDate.setHours(bidExpiringDate.getHours() + 1); // Add 1 hour
-
-                // Update the bidExpiring with the new date
-                offer.bidExpiring = bidExpiringDate;
-            }
-        });
-
 
         axios.post("https://api.montriscript.com/api/ebay/offer/addOffers", {
             offers: offers
         }).then((response: any) => {
             console.log(response.data.message);
-
-            offers.forEach((offer) => {
-                if (offer.bidExpiring) {
-                    // Parse the bidExpiring time as a Date object
-                    const bidExpiringDate = new Date(offer.bidExpiring);
-
-                    // Add 1 hour to the bidExpiring time
-                    bidExpiringDate.setHours(bidExpiringDate.getHours() - 1); // Subtract 1 hour
-
-                    // Update the bidExpiring with the new date
-                    offer.bidExpiring = bidExpiringDate;
-                }
-            });
         }).catch((error) => {
             console.error("[TASK]: Error occurred while saving offers to server: ", error);
         })
