@@ -7,6 +7,7 @@ import {EbayOfferSearchResultsTask} from "../../tasks/EbayOfferSearchResultsTask
 import {DiscordUpdater} from "../discord/DiscordUpdater";
 import {EbayOffer} from "./EbayOffer";
 import axios from "axios";
+import { EbayOfferReceiveEndingBidsTask } from "../../tasks/EbayOfferReceiveEndingBidsTask";
 
 
 // A wrapper class for the Ebay offer search item.
@@ -29,20 +30,37 @@ export class EbayManager extends Manager {
     ebayTasks: Task[] = [];
     ebaySearchingOfferTask: EbayOfferSearchingTask;
     ebayOfferSearchResultsTask: EbayOfferSearchResultsTask;
+    ebayOfferReceiveEndingBidsTask: EbayOfferReceiveEndingBidsTask;
 
     constructor() {
         super("EbayManager");
         this.ebayOfferSearchResultsTask = this.registerTask(new EbayOfferSearchResultsTask(this) as Task, 60) as EbayOfferSearchResultsTask;
         this.ebaySearchingOfferTask = this.registerTask(new EbayOfferSearchingTask(this) as Task, 300) as EbayOfferSearchingTask;
+        this.ebayOfferReceiveEndingBidsTask = this.registerTask(new EbayOfferReceiveEndingBidsTask(this) as Task, 150) as EbayOfferReceiveEndingBidsTask;
         this.ebayTasks.fill(this.ebaySearchingOfferTask);
         this.ebayTasks.fill(this.ebayOfferSearchResultsTask);
+        this.ebayTasks.fill(this.ebayOfferReceiveEndingBidsTask);
     }
     async runAllTasks() {
         await this.ebayOfferSearchResultsTask.runEbayOfferFindSearchResults();
+        await this.ebayOfferReceiveEndingBidsTask.runEbayOfferReceiveEndingBids();
         await this.ebaySearchingOfferTask.runEbayOfferSearchingTask();
     }
 
     reportSuccessfulTask(task: Task, ...args: any[]): void {
+
+        if(task instanceof EbayOfferReceiveEndingBidsTask) {
+            if(args[0].length === 0) {
+                console.log("[TASK]: No bid is about to end.")
+            }
+            else {
+                DiscordUpdater.getInstance().addBidExpiringOffers(args[0]).then(() => {
+                    console.log("[TASK]: Updated Discord with bid expiring offers.")
+                }).catch((error: any) => {
+                    console.error("[TASK]: Error occurred while updating Discord with bid expiring offers: ", error);
+                });
+            }
+        }
 
         // load the search results into the other task.
         if(task instanceof EbayOfferSearchResultsTask) {
@@ -57,7 +75,7 @@ export class EbayManager extends Manager {
 
         if(task instanceof EbayOfferSearchingTask) {
             // Save to server and then pass down to discord.
-            this.saveOffersToServer(args[0]).then((result) => {
+            this.saveOffersToServer(args[0]).then(() => {
                 DiscordUpdater.getInstance().updateEbaySearchResults(args[0]).then((result) => {
                     console.log("[TASK]: Updated Discord with Ebay search results.")
                 }).catch((error) => {

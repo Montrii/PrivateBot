@@ -170,6 +170,17 @@ export class DiscordUpdater {
         await guild.channelToSendTo.send(components)
     }
 
+    private async buildEbayBidExpiringEmbed(guild: any, ebaySettings: any, offer: EbayOffer, localisation: Localisation) {
+        if(offer.isBeddingOffer == false)
+            return;
+
+
+        const components = await this.buildEbayOfferEmbed(guild, ebaySettings, offer, localisation)
+
+        components.content = "@everyone " + localisation.get("ebaySoonBidExpiring");
+        await guild.channelToSendTo.send(components)
+    }
+
     private async updateEbayOfferToChannel(message: any, guild: any, ebaySettings: any, offer: EbayOffer, localisation: Localisation) {
         const components = await this.buildEbayOfferEmbed(guild, ebaySettings, offer, localisation)
         await message.edit(components)
@@ -188,8 +199,6 @@ export class DiscordUpdater {
 
         return formattedDate
     }
-
-
 
     private async buildEbayOfferEmbed(guild: any, ebaySettings: any, offer: EbayOffer, localisation: Localisation) {
         const actionRow = new ActionRowBuilder()
@@ -242,6 +251,39 @@ export class DiscordUpdater {
         }
 
         return result;
+    }
+
+    public async addBidExpiringOffers(offers: EbayOffer[]) {
+        const guildInformer = GuildInformer.getInstance();
+        const ebaySettings = EbaySettings.getEbayDiscordEmbedSettings() as EbaySettings;
+        const localisation = new Localisation();
+
+        const guilds = await guildInformer.getGuildsWithChannelName(ebaySettings.bidExpiringChannelToSend);
+
+        // Sort offers in descending order based on the offerCreated ISO string
+        offers.sort((a, b) => new Date(b.bidExpiring).getTime() - new Date(a.bidExpiring).getTime());
+
+        for (const guild of guilds) {
+            try {
+                localisation.setLanguage(guild.preferredLocale);
+
+
+                // Delete all messages in the channel
+                const messages = await guild.channelToSendTo.messages.fetch({ limit: 100 });
+                await Promise.all(messages.map((msg) => msg.delete()));
+
+                // Loop through offers and send messages
+                for (const offer of offers) {
+                    await this.buildEbayBidExpiringEmbed(guild, ebaySettings, offer, localisation);
+                }
+
+                console.log(`[DISCORD]: Finished updating Ebay expiring bids for Guild: ${guild.name}`);
+            } catch (error) {
+                console.error(
+                    `[DISCORD]: Error while updating Ebay expiring bids for guild: ${guild.name}\nError: ${error}`
+                );
+            }
+        }
     }
 
     public async updateEbaySearchResults(offers: EbayOffer[]) {

@@ -10,7 +10,8 @@ export class EbaySettings {
             bidColor: 0xfc4e03,
             url: "https://www.montriscript.com",
             author: "This Bot - Ebay Offer Scouter",
-            channelToSend: process.env.EBAY_CHANNEL ?? "ebay-offers"
+            channelToSend: process.env.EBAY_CHANNEL ?? "ebay-offers",
+            bidExpiringChannelToSend: process.env.EBAY_BID_EXPIRING_CHANNEL ?? "ebay-bids-expiring"
         }
     }
 }

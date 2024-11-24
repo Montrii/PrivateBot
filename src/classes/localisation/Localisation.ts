@@ -59,6 +59,8 @@ export class Localisation {
             ebayIsBeddingOffer: "Is Bedding Offer: ",
             ebayViewerAmount: "Viewer Amount: ",
 
+            ebaySoonBidExpiring: "This bid is soon expiring, check it out now!",
+
             commandViewTasksDescription: "Displays all tasks in the bot.",
 
             addEbaySearchDescription: "Adds a search for an item on Ebay.",
@@ -122,6 +124,8 @@ export class Localisation {
             ebayBiddingOffersAmount: "Bietende: ",
             ebayIsBeddingOffer: "Ist Bietendes Angebot: ",
             ebayViewerAmount: "Anzahl der Betrachter: ",
+
+            ebaySoonBidExpiring: "Dieses Gebot läuft bald ab, schau es dir jetzt an!",
 
             commandViewTasksDescription: "Zeigt alle Aufgaben im Bot an.",
             addEbaySearchDescription: "Fügt eine Suche nach einem Artikel auf Ebay hinzu.",
