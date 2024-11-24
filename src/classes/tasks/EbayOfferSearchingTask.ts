@@ -275,8 +275,8 @@ export class EbayOfferSearchingTask extends Task {
                             // @ts-ignore
                             const hoursDiff = Math.floor(Math.abs(now - listingDate) / 36e5); // Difference in hours
 
-                            // If the date is within 48 hours, add it to the filteredLis array
-                            if (hoursDiff <= 72) {
+                            // in the last week.
+                            if (hoursDiff <= 148) {
                                 newerThan48HoursOffers.push(liElement);
                             }
                         }
