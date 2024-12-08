@@ -39,7 +39,7 @@ export class EpicGamesSearcherTask extends Task {
                 const gamesArray = result.data.data.Catalog.searchStore.elements.filter((element: any) => element.promotions !== null)
 
                 gamesArray.forEach((element: any) => {
-                    const thumbnail = element.keyImages.filter((image: any) => image.type === "Thumbnail")[0].url
+                    const thumbnail = element.keyImages.filter((image: any) => image.type === "Thumbnail")[0]?.url
 
                     // stores any upcoming promos for the game
                     let promos: any[] = [];

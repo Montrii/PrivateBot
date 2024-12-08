@@ -68,7 +68,7 @@ export class SteamSearcherTask extends Task {
                     let title = ($(game!).find("span.title").get(0)!.children[0] as any).data
                     let link = (game as any).attribs.href
                     let releaseDate = new Date(($(game!).find("div.search_released").get(0)!.children[0] as any).data)
-                    let originalPrice = ($(game!).find("div.discount_original_price").get(0)!.children[0] as any).data
+                    let originalPrice = ($(game!).find("div.discount_original_price").get(0)?.children[0] as any)?.data
                     let image = ($(game!).find("div.search_capsule").get(0)!.children[0] as any).attribs.src
                     let appId = (game as any).attribs["data-ds-appid"]
                     let DLCInformation = await this.validateIfGameIsDLC(appId)

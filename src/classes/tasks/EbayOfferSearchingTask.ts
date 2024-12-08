@@ -149,6 +149,10 @@ export class EbayOfferSearchingTask extends Task {
 // Extract the HTML of the `ul` element containing the offers
         const ulHtml = cheerioPage('ul.srp-results.srp-list.clearfix').html();
 
+
+        if(ulHtml == null)
+            return offers;
+
 // If you need to manipulate or iterate over the `ul` content
         const $ = cheerio.load(ulHtml);
 
