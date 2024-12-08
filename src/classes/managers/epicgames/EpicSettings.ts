@@ -9,7 +9,7 @@ export class EpicSettings {
             color: "blue",
             url: "https://www.montriscript.com",
             author: "This Bot - Epic Game Searcher",
-            channelToSend: process.env.EPIC_REPORT_CHANNEL ?? "free-epic-games"
+            channelToSend: process.env?.EPIC_REPORT_CHANNEL ?? "free-epic-games"
         }
     }
 }
