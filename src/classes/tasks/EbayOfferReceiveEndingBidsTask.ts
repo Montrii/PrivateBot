@@ -12,6 +12,8 @@ export class EbayOfferReceiveEndingBidsTask extends Task {
         this.manager = manager;
 
     }
+
+    // fixed this API call
     async runEbayOfferReceiveEndingBids() {
         await super.runTask(async () => {
             console.log("[TASK]: " + this.name + " is running!")
