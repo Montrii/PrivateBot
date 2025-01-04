@@ -13,7 +13,7 @@ export class EbayOfferReceiveEndingBidsTask extends Task {
 
     }
 
-    // fixed this API call
+    // fixed this API callasd
     async runEbayOfferReceiveEndingBids() {
         await super.runTask(async () => {
             console.log("[TASK]: " + this.name + " is running!")
