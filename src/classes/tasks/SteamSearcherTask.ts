@@ -77,12 +77,6 @@ export class SteamSearcherTask extends Task {
                     // Ignoring this line because we use multiple constructors
                     // @ts-ignore
                     let steamGame = new SteamGame(appId, title, releaseDate, DLCInformation.ratingIcon, image, link, DLCInformation.untilDate, originalPrice, DLCInformation.isDLC, DLCInformation.mainGame)
-
-                    // if until date is not set, set it to end of the year
-                    if(steamGame.untilDate == null || steamGame.untilDate == undefined) {
-                        steamGame.untilDate = new Date(new Date().getFullYear(), 11, 31);
-                    }
-
                     this.games.push(steamGame)
                 }
 
@@ -138,17 +132,6 @@ export class SteamSearcherTask extends Task {
             }
 
             const $ = cheerio.load(result.data);
-            const dlcContainer = $('div[class="game_area_bubble game_area_dlc_bubble "]');
-
-            // check if dlcContainer is empty on the page -> no DLC
-            if(dlcContainer === null || dlcContainer.length <= 0 || dlcContainer.children.length <= 0) {
-                console.log("[STEAM]: Game is not a DLC: " + appId);
-                return new Promise((resolve, reject) => {
-                    resolve({isDLC: false})
-                })
-            }
-
-            // Here we know that the game is a DLC
 
             let untilDateContainer = $('p[class="game_purchase_discount_quantity "]');
             if(untilDateContainer !== null && untilDateContainer.children.length > 0) {
@@ -156,6 +139,18 @@ export class SteamSearcherTask extends Task {
             }
 
             const ratingIcon = ($('div[class="game_rating_icon"]').get(0)!.children[0]?.next! as any).attribs?.src
+
+            const dlcContainer = $('div[class="game_area_bubble game_area_dlc_bubble "]');
+
+            // check if dlcContainer is empty on the page -> no DLC
+            if(dlcContainer === null || dlcContainer.length <= 0 || dlcContainer.children.length <= 0) {
+                console.log("[STEAM]: Game is not a DLC: " + appId);
+                return new Promise((resolve, reject) => {
+                    resolve({isDLC: false, untilDate: untilDate, ratingIcon: ratingIcon})
+                })
+            }
+
+            // Here we know that the game is a DLC
             mainGame = await this.getMainGameByLink($(dlcContainer).find("a").get(0)!.attribs!.href) as SteamGame;
 
             console.log("[STEAM]: Game is a DLC: " + appId + " | Main game: " + mainGame.title)
@@ -192,6 +187,7 @@ const SteamSearcherTaskUtilties = {
     makeUntilDateIntoDate(untilDate: any)
     {
         let untilDateNew = untilDate.replace("Free to keep when you get it before", "");
+
         let current = new Date().getFullYear();
         untilDateNew = untilDateNew.replace("Some limitations apply.", "");
         untilDateNew = untilDateNew.replace(".", "")
@@ -208,6 +204,8 @@ const SteamSearcherTaskUtilties = {
         untilDateNew.setHours(hours);
         untilDateNew.setMinutes(minutes);
 
+
+        console.log(untilDateNew)
         return untilDateNew;
     }
 }
