@@ -5,10 +5,12 @@ import {GuildInformer} from "../../backend/GuildInformer";
 import {SteamSettings} from "../steam/SteamSettings";
 
 const { ButtonStyle } = require('discord.js');
-import {ButtonBuilder, EmbedBuilder, ActionRowBuilder, Message} from "discord.js";
+import {ButtonBuilder, EmbedBuilder, ActionRowBuilder, Message, GuildBasedChannel} from "discord.js";
 import {EbayOffer} from "../ebay/EbayOffer";
 import {EbaySettings} from "../ebay/EbaySettings";
 import {ErrorManager} from "../../backend/ErrorManager";
+import {GenshinCode} from "../genshin/GenshinCode";
+import {GenshinSettings} from "../genshin/GenshinSettings";
 
 // Handles updating any discord bot messages send by the bot.
 
@@ -20,6 +22,9 @@ export class DiscordUpdater {
 
     // The user (bot) for the DiscordUpdater
     private user: any;
+
+
+    public static isAlreadyRunningDiscordJob: boolean = false;
 
 
     // Private constructor to prevent external instantiation
@@ -45,7 +50,143 @@ export class DiscordUpdater {
         return this;
     }
 
+
+
+
+
+    public async buildGenshinCodeEmbed(guild: any, genshinSettings: any, code: GenshinCode, localisation: Localisation) {
+        const actionRow = new ActionRowBuilder()
+
+        // Create the embed
+        const gameEmbed = new EmbedBuilder()
+            .setTitle(localisation.get("genshinTitle") + code.getCode()!)  // Set the truncated title or normal title
+            .setURL(code.getLink()!)
+
+
+        if(typeof(code.getValid()) !== "string") {
+            // @ts-ignore
+            code.setValid("(unknown)");
+        }
+
+        if(code.getIsSpecialCode()) {
+            gameEmbed.setDescription(localisation.get("genshinSpecialCode") as string)
+
+            // Create the button for the embed
+            const addButton = new ButtonBuilder()
+                .setLabel(localisation.get("genshinSpecialDescription"))  // Set the button label
+                .setStyle(ButtonStyle.Link)
+                .setURL(code.getLink());  // Set the URL to the base link
+
+            // Add the button to the action row
+            actionRow.addComponents(addButton);
+
+        }
+        else {
+            gameEmbed.setDescription(localisation.get("genshinDescription") as string)
+            gameEmbed.addFields(({name: localisation.get("genshinDiscovered"), value: code.getDiscovered(), inline: true} as any))
+            gameEmbed.addFields(({name: localisation.get("genshinForWhichRegion"), value: code.getServer(), inline: true} as any))
+            gameEmbed.addFields(({name: localisation.get("genshinValidUntil"), value: code.getValid()!, inline: false} as any))
+
+
+            code.getItems().forEach((item) =>
+            {
+                let emojiName = item.replace("×", "").replace(/[0-9]/g, '').replace("'", "").replace(" ", "");
+                // @ts-ignore
+                let emoji = this.client.emojis.cache.find(emoji => emojiName.includes(emoji.name));
+                if (emoji !== undefined)
+                {
+                    gameEmbed.addFields({name: "Item", value: `${emoji} ${item}`, inline: true});
+                }
+                else
+                {
+                    gameEmbed.addFields({name: "Item", value: `${item}`, inline: true});
+                }
+
+            })
+
+
+            // Create the button for the embed
+            const addButton = new ButtonBuilder()
+                .setLabel(localisation.get("genshinOpen"))  // Set the button label
+                .setStyle(ButtonStyle.Link)
+                .setURL(code.getLink());  // Set the URL to the base link
+
+            // Add the button to the action row
+            actionRow.addComponents(addButton);
+
+        }
+
+        return { embeds: [gameEmbed], components: [actionRow] };
+    }
+
+    public async addGenshinCodeToChannel(guild: any, genshinSettings: GenshinSettings, code: GenshinCode, localisation: Localisation) {
+        try {
+            const components = await this.buildGenshinCodeEmbed(guild, genshinSettings, code, localisation)
+            // @ts-ignore
+            await guild.channels.cache.find((channel: GuildBasedChannel) => channel.name === genshinSettings.channelToSend).send(components)
+        }
+        catch(error) {
+            ErrorManager.showError("Error while attempting to add Genshin code (" + code.getCode() + ") to channel", error)
+        }
+    }
+
+    public async updateGenshinCodes(codes: GenshinCode[]) {
+        DiscordUpdater.isAlreadyRunningDiscordJob = true;
+
+        const guildInformer = GuildInformer.getInstance();
+        const genshinSettings = GenshinSettings.getDiscordSettings();
+        const localisation = new Localisation();
+
+
+
+        // Loop through each guild that the bot is part of that has the channel name that the bot is supposed to send to.
+        // @ts-ignore
+
+
+        guildInformer.getGuildsWithChannelName(genshinSettings.channelToSend).forEach((guild: any) => {
+            // Adjust the language of the bot to the preferred language of the guild.
+            localisation.setLanguage(guild.preferredLocale);
+
+
+
+            // Fetch all messages in the channel and delete them.
+            guild.channelToSendTo.messages.fetch({ limit: 100 })
+                .then((messages: any) => {
+                    const botMessages = messages.filter((message: any) => message.author.id === this.user.id);
+
+                    return Promise.all(botMessages.map((message: any) => message.delete().catch(console.error)));
+                })
+                .then(() => {
+                    // Add new messages for each code in the `codes` array.
+                    codes.forEach((code) => {
+                        this.addGenshinCodeToChannel(guild, genshinSettings, code, localisation);
+                        console.log(
+                            `[DISCORD]: Adding message for code: ${code.getCode()} | guild: ${guild.name}`
+                        );
+                    });
+                })
+                .finally(() => {
+                    console.log(
+                        `[DISCORD]: Finished updating Genshin Code messages for Guild: ${guild.name}`
+                    );
+                    DiscordUpdater.isAlreadyRunningDiscordJob = false;
+                })
+                .catch((error: Error) => {
+                    ErrorManager.showError(
+                        `[DISCORD]: Error while updating Genshin Code for guild: ${guild.name}\nDown below:`,
+                        error
+                    );
+                    DiscordUpdater.isAlreadyRunningDiscordJob = false;
+                });
+        });
+
+    }
+
     public async updateSteamGames(games: SteamGame[]) {
+
+        DiscordUpdater.isAlreadyRunningDiscordJob = true;
+
+
         const guildInformer = GuildInformer.getInstance();
         const steamSettings = SteamSettings.getSteamDiscordEmbedSettings();
         const localisation = new Localisation();
@@ -114,10 +255,12 @@ export class DiscordUpdater {
                 // Finally: Finish up the process.
                 .finally(() => {
                     console.log("[DISCORD]: Finished updating Steam messages "  + "for Guild: " + guild.name);
+                    DiscordUpdater.isAlreadyRunningDiscordJob = false;
                 })
                 // Error Handling
                 .catch((error: Error) => {
                     ErrorManager.showError("[DISCORD]: Error while updating Steam messages for guild: " + guild.name + "\nDown below:", error)
+                    DiscordUpdater.isAlreadyRunningDiscordJob = false;
                 })
         })
     }
@@ -177,7 +320,7 @@ export class DiscordUpdater {
     private async addSteamGameToChannel(guild: any, steamSettings: any, game: SteamGame, localisation: Localisation) {
         try {
             const components = await this.buildSteamGameEmbed(guild, steamSettings, game, localisation)
-            await guild.channelToSendTo.send(components)
+            await guild.channels.cache.find((channel: GuildBasedChannel) => channel.name === steamSettings.channelToSend).send(components)
         }
         catch(error) {
             ErrorManager.showError("Error while attempting to add Steam game (" + game.appId + ") to channel", error)
@@ -189,7 +332,7 @@ export class DiscordUpdater {
     private async addEbayOfferToChannel(guild: any, ebaySettings: any, offer: EbayOffer, localisation: Localisation) {
         try {
             const components = await this.buildEbayOfferEmbed(guild, ebaySettings, offer, localisation)
-            await guild.channelToSendTo.send(components)
+            await guild.channels.cache.find((channel: GuildBasedChannel) => channel.name === ebaySettings.channelToSend).send(components)
         }
         catch(error) {
             ErrorManager.showError("Error while attempting to add Ebay offer (" + offer.title + ") to channel", error)
@@ -205,7 +348,7 @@ export class DiscordUpdater {
             const components = await this.buildEbayOfferEmbed(guild, ebaySettings, offer, localisation)
 
             components.content = "@everyone " + localisation.get("ebaySoonBidExpiring");
-            await guild.channelToSendTo.send(components)
+            await guild.channels.cache.find((channel: GuildBasedChannel) => channel.name === ebaySettings.channelToSend).send(components)
         }
         catch(error) {
             ErrorManager.showError("Error while attempting to build Ebay bid expiring offer (" + offer.title + ") to channel", error)
@@ -343,6 +486,10 @@ export class DiscordUpdater {
     }
 
     public async updateEbaySearchResults(offers: EbayOffer[]) {
+
+        DiscordUpdater.isAlreadyRunningDiscordJob = true;
+
+
         const guildInformer = GuildInformer.getInstance();
         const ebaySettings = EbaySettings.getEbayDiscordEmbedSettings() as EbaySettings;
         const localisation = new Localisation();
@@ -436,9 +583,12 @@ export class DiscordUpdater {
                 }
 
                 console.log("[DISCORD]: Finished updating Ebay offers for Guild: " + guild.name);
+
+                DiscordUpdater.isAlreadyRunningDiscordJob = false;
             } catch (error) {
                 // @ts-ignore
                 console.error("[DISCORD]: Error while updating Ebay offers for guild: " + guild.name + "\nError: " + error.message + " \n" + error.stack);
+                DiscordUpdater.isAlreadyRunningDiscordJob = false;
             }
         }
     }

@@ -9,7 +9,7 @@ export class EpicGamesManager extends Manager {
     epicGamesSearchTask: EpicGamesSearcherTask
     constructor() {
         super("EpicGamesManager");
-        this.epicGamesSearchTask = this.registerTask(new EpicGamesSearcherTask(this) as Task, 1800) as EpicGamesSearcherTask;
+        this.epicGamesSearchTask = this.registerTask(new EpicGamesSearcherTask(this) as Task, process.env.RUN_EPIC_SEARCHING_TASK_TIMER_IN_SECONDS as any) as EpicGamesSearcherTask;
     }
     async runAllTasks() {
         await this.epicGamesSearchTask.runEpicGamesTask();
@@ -17,6 +17,10 @@ export class EpicGamesManager extends Manager {
 
     reportSuccessfulTask(task: Task, ...args: any[]): void {
         console.log("[TASK]: " + task.name + " successfully completed!")
+
+        if(task === this.epicGamesSearchTask) {
+            console.log("Updating Discord with new Epic Games offers.")
+        }
     }
 
     reportUnsuccessfulTask(task: Task, ...args: any[]): void {

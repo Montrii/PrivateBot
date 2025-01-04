@@ -35,9 +35,9 @@ export class EbayManager extends Manager {
 
     constructor() {
         super("EbayManager");
-        this.ebayOfferSearchResultsTask = this.registerTask(new EbayOfferSearchResultsTask(this) as Task, 60) as EbayOfferSearchResultsTask;
-        this.ebaySearchingOfferTask = this.registerTask(new EbayOfferSearchingTask(this) as Task, 300) as EbayOfferSearchingTask;
-        this.ebayOfferReceiveEndingBidsTask = this.registerTask(new EbayOfferReceiveEndingBidsTask(this) as Task, 150) as EbayOfferReceiveEndingBidsTask;
+        this.ebayOfferSearchResultsTask = this.registerTask(new EbayOfferSearchResultsTask(this) as Task, process.env.RUN_EBAY_SEARCHING_TASK_TIMER_IN_SECONDS as any) as EbayOfferSearchResultsTask;
+        this.ebaySearchingOfferTask = this.registerTask(new EbayOfferSearchingTask(this) as Task, process.env.RUN_EBAY_SEARCHING_TASK_TIMER_IN_SECONDS as any / 4) as EbayOfferSearchingTask;
+        this.ebayOfferReceiveEndingBidsTask = this.registerTask(new EbayOfferReceiveEndingBidsTask(this) as Task, process.env.RUN_EBAY_SEARCHING_TASK_TIMER_IN_SECONDS as any/2) as EbayOfferReceiveEndingBidsTask;
         this.ebayTasks.fill(this.ebaySearchingOfferTask);
         this.ebayTasks.fill(this.ebayOfferSearchResultsTask);
         this.ebayTasks.fill(this.ebayOfferReceiveEndingBidsTask);
@@ -55,7 +55,7 @@ export class EbayManager extends Manager {
                 console.log("[TASK]: No bid is about to end.")
             }
             else {
-                DiscordUpdater.getInstance().addBidExpiringOffers(args[0]).then(() => {
+               DiscordUpdater.getInstance().addBidExpiringOffers(args[0]).then(() => {
                     console.log("[TASK]: Updated Discord with bid expiring offers.")
                 }).catch((error: any) => {
                     ErrorManager.showError("[TASK]: Error occurred while updating Discord with bid expiring offers: ", error);
@@ -95,7 +95,7 @@ export class EbayManager extends Manager {
         }).then((response: any) => {
             console.log(response.data.message);
         }).catch((error) => {
-            ErrorManager.showError("[TASK]: Error occurred while saving offers to server: ", error);
+            ErrorManager.showError("[TASK]: Error occurred while saving offers to servesdasadr: ", error);
         })
     }
 

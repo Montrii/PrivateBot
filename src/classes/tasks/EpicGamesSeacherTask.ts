@@ -40,6 +40,8 @@ export class EpicGamesSearcherTask extends Task {
                 const gamesArray = result.data.data.Catalog.searchStore.elements.filter((element: any) => element.promotions !== null)
 
                 gamesArray.forEach((element: any) => {
+
+
                     const thumbnail = element.keyImages.filter((image: any) => image.type === "Thumbnail")[0]?.url
 
                     // stores any upcoming promos for the game
@@ -72,8 +74,7 @@ export class EpicGamesSearcherTask extends Task {
                                 const startDate = new Date(promo.startDate);
                                 const endDate = new Date(promo.endDate);
                                 return new Date() >= startDate && new Date() <= endDate;
-                            });
-
+                            }) as any;
                     }
 
 
@@ -92,6 +93,9 @@ export class EpicGamesSearcherTask extends Task {
 
                     //gameInfoPromise.push(this.fetchEpicGamesLink(element.id))
                     // Add the game to the list
+
+                    console.log("[TASK]: Found game: " + element.title)
+
                     this.games.push(new EpicGame(element.id, element.urlSlug, element.title, element.description, new Date(element.effectiveDate), element.price.totalPrice.fmtPrice.originalPrice, element.price.totalPrice.currencyCode, element.offerType, thumbnail, "https://store.epicgames.com/en-US/p/" + slug, element.seller.name, freeNow, promos))
                 })
                 this.manager.reportSuccessfulTask(this, this.games);

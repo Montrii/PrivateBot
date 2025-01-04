@@ -15,6 +15,7 @@ import {DiscordUpdater} from "./classes/managers/discord/DiscordUpdater";
 import {GuildInformer} from "./classes/backend/GuildInformer";
 import {CommandRegister} from "./classes/backend/CommandRegister";
 import {EbayManager} from "./classes/managers/ebay/EbayManager";
+import {GenshinManager} from "./classes/managers/genshin/GenshinManager";
 
 
 // Class Hierachy
@@ -48,9 +49,11 @@ client.on("ready", async (user) => {
 
 
 
+    await new GenshinManager().runAllTasks()
     await new SteamManager().runAllTasks()
     await new EpicGamesManager().runAllTasks()
     await new EbayManager().runAllTasks()
+
 
 })
 

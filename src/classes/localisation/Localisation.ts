@@ -67,6 +67,19 @@ export class Localisation {
             deleteEbaySearchDescription: "Deletes a search for an item on Ebay.",
             viewEbaySearchDescription: "Shows all searches for items on Ebay.",
 
+
+            genshinTitle: "Code: ",
+            genshinValidUntil: "Valid until: ",
+            genshinOpen: "Redeem",
+            genshinView: "View",
+            genshinDescription: "This code is available on Genshin Impact for a limited time!",
+            genshinSpecial: "Special",
+            genshinSpecialDescription: "This code is available on Genshin Impact for a limited time and is special!",
+
+
+            genshinForWhichRegion: "For region: ",
+            genshinDiscovered: "Discovered: ",
+
         };
 
         this.de = {
@@ -131,6 +144,15 @@ export class Localisation {
             addEbaySearchDescription: "Fügt eine Suche nach einem Artikel auf Ebay hinzu.",
             deleteEbaySearchDescription: "Löscht eine Suche nach einem Artikel auf Ebay.",
             viewEbaySearchDescription: "Zeigt alle Suchen nach Artikeln auf Ebay an.",
+
+
+            genshinTitle: "Code: ",
+            genshinOpen: "Einlösen",
+            genshinView: "Anschauen",
+            genshinDescription: "Dieser Code ist für eine begrenzte Zeit auf Genshin Impact verfügbar!",
+            genshinSpecial: "Spezial",
+            genshinSpecialDescription: "Dieser Code ist für eine begrenzte Zeit auf Genshin Impact verfügbar und ist besonders!",
+
         };
 
         this._currentLanguage = "en";
