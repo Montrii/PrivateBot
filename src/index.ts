@@ -57,4 +57,5 @@ client.on("ready", async (user) => {
 
 })
 
+// Works!
 client.login(process.env.TOKEN);
