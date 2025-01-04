@@ -1,9 +1,7 @@
 import {Task} from "./Task";
 import {SteamManager} from "../managers/steam/SteamManager";
-
 import axios from "axios";
 import cheerio from "cheerio";
-import {HTMLInfo} from "../backend/HTMLInfo";
 import {SteamGame} from "../managers/steam/SteamGame";
 import {ErrorManager} from "../backend/ErrorManager";
 
@@ -203,9 +201,6 @@ const SteamSearcherTaskUtilties = {
 
         untilDateNew.setHours(hours);
         untilDateNew.setMinutes(minutes);
-
-
-        console.log(untilDateNew)
         return untilDateNew;
     }
 }

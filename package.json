@@ -5,9 +5,10 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc --module commonjs",
+    "build": "tsc --module commonjs && npx typedoc --entryPointStrategy Expand src",
+    "doc": "typedoc --entryPointStrategy Expand src",
     "start": "javascript-obfuscator ./dist --compact true --dead-code-injection true --self-defending false --rename-globals true --output ./dist && node .",
-    "startNew": "tsc --module commonjs && javascript-obfuscator ./dist --compact true --dead-code-injection true --self-defending false --rename-globals true --output ./dist && node ."
+    "startNew": "tsc --module commonjs && npx typedoc --entryPointStrategy Expand src && javascript-obfuscator ./dist --compact true --dead-code-injection true --self-defending false --rename-globals true --output ./dist && node ."
   },
   "repository": {
     "type": "git",
@@ -29,7 +30,7 @@
   "homepage": "https://github.com/Montrii/PrivateBot#readme",
   "dependencies": {
     "@types/lodash": "^4.17.1",
-    "axios": "^1.6.8",
+    "axios": "1.7.4",
     "cheerio": "^1.0.0-rc.12",
     "discord.js": "^14.14.1",
     "dotenv": "^16.4.5",
@@ -44,6 +45,7 @@
   "devDependencies": {
     "javascript-obfuscator": "^4.1.0",
     "rimraf": "^5.0.5",
-    "tsx": "^4.8.2"
+    "tsx": "^4.8.2",
+    "typedoc": "^0.27.6"
   }
 }
