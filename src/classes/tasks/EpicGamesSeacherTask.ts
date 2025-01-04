@@ -11,6 +11,7 @@ import {EpicGamesManager} from "../managers/epicgames/EpicGamesManager";
 import axios from "axios";
 import cheerio from "cheerio";
 import {HTMLInfo} from "../backend/HTMLInfo";
+import {ErrorManager} from "../backend/ErrorManager";
 
 export class EpicGamesSearcherTask extends Task {
     manager: EpicGamesManager;
@@ -95,7 +96,7 @@ export class EpicGamesSearcherTask extends Task {
                 })
                 this.manager.reportSuccessfulTask(this, this.games);
             }).catch((error) => {
-                console.error("[TASK]: " + this.name + " failed! Down below: " + error.message + " \n" + error.stack)
+                ErrorManager.showError("[TASK]: " + this.name + " failed! Down below: ", error);
                 this.manager.reportUnsuccessfulTask(this, this.games);
             })
         });

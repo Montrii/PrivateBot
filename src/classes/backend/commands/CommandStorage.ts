@@ -5,6 +5,7 @@ import {ChatInputCommandInteraction, ColorResolvable, EmbedAuthorOptions, EmbedB
 import {Manager} from "../Manager";
 import {Task} from "../../tasks/Task";
 import axios from "axios";
+import {ErrorManager} from "../ErrorManager";
 
 function getCommands() {
     return [
@@ -54,7 +55,7 @@ function getCommands() {
                             interaction.reply("Failed to add search term " + searchValue + ".")
                         }
                     }).catch((error: any) => {
-                        console.error(error)
+                        ErrorManager.showError("Error while attempting to add '" + searchValue + "' - ", error)
                     })
                 } else {
                     // Handle case where the parameter was not provided (shouldn't happen since it's required)
@@ -79,6 +80,7 @@ function getCommands() {
                         }
                     }).catch((error: any) => {
                         interaction.reply("Error while attempting to delete '" + searchValue + "' - " + error.response.data.message)
+                        ErrorManager.showError("Error while attempting to delete '" + searchValue + "' - ", error)
                     })
                 } else {
                     // Handle case where the parameter was not provided (shouldn't happen since it's required)
@@ -101,7 +103,7 @@ function getCommands() {
                         interaction.reply("Failed to retrieve search results.")
                     }
                 }).catch((error: any) => {
-                    console.error(error)
+                    ErrorManager.showError("Error while attempting to view search results - ", error)
                     interaction.reply("Failed to retrieve search results.")
                 })
             }),

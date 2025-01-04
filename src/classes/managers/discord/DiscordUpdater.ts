@@ -8,6 +8,7 @@ const { ButtonStyle } = require('discord.js');
 import {ButtonBuilder, EmbedBuilder, ActionRowBuilder, Message} from "discord.js";
 import {EbayOffer} from "../ebay/EbayOffer";
 import {EbaySettings} from "../ebay/EbaySettings";
+import {ErrorManager} from "../../backend/ErrorManager";
 
 // Handles updating any discord bot messages send by the bot.
 
@@ -116,7 +117,7 @@ export class DiscordUpdater {
                 })
                 // Error Handling
                 .catch((error: Error) => {
-                    console.error("[DISCORD]: Error while updating Steam messages for guild: " + guild.name + "\nDown below: " + error.message + " \n" + error.stack)
+                    ErrorManager.showError("[DISCORD]: Error while updating Steam messages for guild: " + guild.name + "\nDown below:", error)
                 })
         })
     }
@@ -138,9 +139,13 @@ export class DiscordUpdater {
             .setURL(game.link!)
             .setDescription(localisation.get("steamdescription") as string)
 
+
         gameEmbed.addFields(({ name: localisation.get("steamappId"), value: game.appId, inline: true } as any))
         gameEmbed.addFields(({ name: localisation.get("steamreleaseDate"), value: game.releaseDate?.toLocaleString(guild.preferredLocale), inline: false } as any))
         gameEmbed.addFields( ({ name: localisation.get("steamuntilDate"), value: game.untilDate?.toLocaleString(guild.preferredLocale), inline: false} as any))
+
+
+
 
         if(game.isDLC) {
             gameEmbed
@@ -151,39 +156,70 @@ export class DiscordUpdater {
             gameButton.setLabel(localisation.get("steamaddDLC") as string)
             gameMainButton = new ButtonBuilder().setStyle(ButtonStyle.Link).setURL(game.mainGame!.link as string).setLabel(localisation.get("steamaddGame") as string)
             gameEmbed.addFields( ({ name: localisation.get("steamdlcFor"), value: game.mainGame!.title, inline: false} as any))
+
+            return {embeds: [gameEmbed], components: [actionRow.addComponents((gameButton as any), gameMainButton)]}
         }
-        return {embeds: [gameEmbed], components: [actionRow.addComponents((gameButton as any), gameMainButton)]}
+        else {
+            return {embeds: [gameEmbed], components: [actionRow.addComponents((gameButton as any))]}
+        }
+
     }
 
     private async updateSteamGameInChannel(message: any, guild: any, steamSettings: any, game: SteamGame, localisation: Localisation) {
-        const components = await this.buildSteamGameEmbed(guild, steamSettings, game, localisation)
-        await message.edit(components)
+        try {
+            const components = await this.buildSteamGameEmbed(guild, steamSettings, game, localisation)
+            await message.edit(components)
+        }
+        catch(error) {
+            ErrorManager.showError("Error while attempting to update Steam game (" + game.appId + ") to channel", error)
+        }
     }
     private async addSteamGameToChannel(guild: any, steamSettings: any, game: SteamGame, localisation: Localisation) {
-        const components = await this.buildSteamGameEmbed(guild, steamSettings, game, localisation)
-        await guild.channelToSendTo.send(components)
+        try {
+            const components = await this.buildSteamGameEmbed(guild, steamSettings, game, localisation)
+            await guild.channelToSendTo.send(components)
+        }
+        catch(error) {
+            ErrorManager.showError("Error while attempting to add Steam game (" + game.appId + ") to channel", error)
+        }
+
     }
 
 
     private async addEbayOfferToChannel(guild: any, ebaySettings: any, offer: EbayOffer, localisation: Localisation) {
-        const components = await this.buildEbayOfferEmbed(guild, ebaySettings, offer, localisation)
-        await guild.channelToSendTo.send(components)
+        try {
+            const components = await this.buildEbayOfferEmbed(guild, ebaySettings, offer, localisation)
+            await guild.channelToSendTo.send(components)
+        }
+        catch(error) {
+            ErrorManager.showError("Error while attempting to add Ebay offer (" + offer.title + ") to channel", error)
+        }
     }
 
     private async buildEbayBidExpiringEmbed(guild: any, ebaySettings: any, offer: EbayOffer, localisation: Localisation) {
-        if(offer.isBeddingOffer == false)
+        if(!offer.isBeddingOffer)
             return;
 
 
-        const components = await this.buildEbayOfferEmbed(guild, ebaySettings, offer, localisation)
+        try {
+            const components = await this.buildEbayOfferEmbed(guild, ebaySettings, offer, localisation)
 
-        components.content = "@everyone " + localisation.get("ebaySoonBidExpiring");
-        await guild.channelToSendTo.send(components)
+            components.content = "@everyone " + localisation.get("ebaySoonBidExpiring");
+            await guild.channelToSendTo.send(components)
+        }
+        catch(error) {
+            ErrorManager.showError("Error while attempting to build Ebay bid expiring offer (" + offer.title + ") to channel", error)
+        }
     }
 
     private async updateEbayOfferToChannel(message: any, guild: any, ebaySettings: any, offer: EbayOffer, localisation: Localisation) {
-        const components = await this.buildEbayOfferEmbed(guild, ebaySettings, offer, localisation)
-        await message.edit(components)
+        try {
+            const components = await this.buildEbayOfferEmbed(guild, ebaySettings, offer, localisation)
+            await message.edit(components)
+        }
+        catch(error) {
+            ErrorManager.showError("Error while attempting to update Ebay offer (" + offer.title + ") to channel", error)
+        }
     }
 
     private formatDateIntoGermanDate(dateString: string) {

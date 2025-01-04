@@ -5,6 +5,7 @@ import axios from "axios";
 import cheerio from "cheerio";
 import {HTMLInfo} from "../backend/HTMLInfo";
 import {SteamGame} from "../managers/steam/SteamGame";
+import {ErrorManager} from "../backend/ErrorManager";
 
 
 /*
@@ -75,14 +76,21 @@ export class SteamSearcherTask extends Task {
 
                     // Ignoring this line because we use multiple constructors
                     // @ts-ignore
-                    this.games.push(new SteamGame(appId, title, releaseDate, DLCInformation.ratingIcon, image, link, DLCInformation.untilDate, originalPrice, DLCInformation.isDLC, DLCInformation.mainGame))
+                    let steamGame = new SteamGame(appId, title, releaseDate, DLCInformation.ratingIcon, image, link, DLCInformation.untilDate, originalPrice, DLCInformation.isDLC, DLCInformation.mainGame)
+
+                    // if until date is not set, set it to end of the year
+                    if(steamGame.untilDate == null || steamGame.untilDate == undefined) {
+                        steamGame.untilDate = new Date(new Date().getFullYear(), 11, 31);
+                    }
+
+                    this.games.push(steamGame)
                 }
 
                 // Report to manager that task was successful
                 this.manager.reportSuccessfulTask(this, this.games, true);
 
             }).catch((error) => {
-                console.error("[TASK]: " + this.name + " failed! Down below: " + error.message + " \n" + error.stack)
+                ErrorManager.showError("[TASK]: " + this.name + " failed! Down below: ", error);
             })
         });
     }
@@ -110,7 +118,7 @@ export class SteamSearcherTask extends Task {
                 resolve(new SteamGame(appId, title, releaseDate, ratingIcon, image, link))
             })
         }).catch((error) => {
-            console.error("[STEAM]: Error while fetching main game for DLC: " + error);
+            ErrorManager.showError("[STEAM]: Error while fetching main game for DLC: ", error);
         })
     }
 
@@ -157,7 +165,7 @@ export class SteamSearcherTask extends Task {
             })
 
         }).catch((error) => {
-            console.error("[STEAM]: Error while fetching game steam link in attempting to check if DLC: " + error);
+            ErrorManager.showError("[STEAM]: Error while fetching game steam link in attempting to check if DLC: ", error);
         });
     }
 }

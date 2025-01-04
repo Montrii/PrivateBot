@@ -1,6 +1,7 @@
 import {Task} from "./Task";
 import axios from "axios";
 import {EbayManager} from "../managers/ebay/EbayManager";
+import {ErrorManager} from "../backend/ErrorManager";
 
 
 
@@ -33,7 +34,7 @@ export class EbayOfferSearchResultsTask extends Task {
                 this.manager.reportSuccessfulTask(this, results);
 
             }).catch((error) => {
-                console.error("[TASK]: " + this.name + " failed! Down below: " + error.message + " \n" + error.stack)
+                ErrorManager.showError("[TASK]: " + this.name + " failed! Down below: ", error);
                 this.manager.reportUnsuccessfulTask(this, null);
             })
 
@@ -41,7 +42,7 @@ export class EbayOfferSearchResultsTask extends Task {
 
 
         }).catch((error) => {
-            console.error("[TASK]: " + this.name + " failed! Down below: " + error.message + " \n" + error.stack)
+            ErrorManager.showError("[TASK]: " + this.name + " failed! Down below: ", error);
             this.manager.reportUnsuccessfulTask(this, null);
         })
     }

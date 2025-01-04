@@ -6,6 +6,7 @@ import puppeteer, {Page} from "puppeteer";
 import cheerio from "cheerio";
 import * as path from "node:path";
 import * as fs from "node:fs";
+import {ErrorManager} from "../backend/ErrorManager";
 
 // A wrapper class for the Ebay offer search item.
 class EbayOfferSearchItem {
@@ -479,7 +480,7 @@ export class EbayOfferSearchingTask extends Task {
             this.manager.reportSuccessfulTask(this, this.offers);
 
         }).catch((error) => {
-            console.error("[TASK]: " + this.name + " failed! Down below: " + error.message + " \n" + error.stack)
+            ErrorManager.showError("[TASK]: " + this.name + " failed!", error)
             this.manager.reportUnsuccessfulTask(this, this.offers);
         })
     }

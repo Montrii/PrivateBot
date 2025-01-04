@@ -8,6 +8,7 @@ import {DiscordUpdater} from "../discord/DiscordUpdater";
 import {EbayOffer} from "./EbayOffer";
 import axios from "axios";
 import { EbayOfferReceiveEndingBidsTask } from "../../tasks/EbayOfferReceiveEndingBidsTask";
+import {ErrorManager} from "../../backend/ErrorManager";
 
 
 // A wrapper class for the Ebay offer search item.
@@ -57,7 +58,7 @@ export class EbayManager extends Manager {
                 DiscordUpdater.getInstance().addBidExpiringOffers(args[0]).then(() => {
                     console.log("[TASK]: Updated Discord with bid expiring offers.")
                 }).catch((error: any) => {
-                    console.error("[TASK]: Error occurred while updating Discord with bid expiring offers: ", error);
+                    ErrorManager.showError("[TASK]: Error occurred while updating Discord with bid expiring offers: ", error);
                 });
             }
         }
@@ -79,7 +80,7 @@ export class EbayManager extends Manager {
                 DiscordUpdater.getInstance().updateEbaySearchResults(args[0]).then((result) => {
                     console.log("[TASK]: Updated Discord with Ebay search results.")
                 }).catch((error) => {
-                    console.error("[TASK]: Error occurred while updating Discord with Ebay search results: ", error);
+                    ErrorManager.showError("[TASK]: Error occurred while updating Discord with Ebay search results: ", error);
                 });
             })
 
@@ -94,7 +95,7 @@ export class EbayManager extends Manager {
         }).then((response: any) => {
             console.log(response.data.message);
         }).catch((error) => {
-            console.error("[TASK]: Error occurred while saving offers to server: ", error);
+            ErrorManager.showError("[TASK]: Error occurred while saving offers to server: ", error);
         })
     }
 
