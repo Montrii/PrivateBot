@@ -1,7 +1,7 @@
 {
-  "name": "privatebot",
+  "name": "GaunrBot",
   "version": "1.0.0",
-  "description": "A discord bot written for my personal use, published on Github",
+  "description": "A discord bot written for my and friends personal use, published on Github for educational purposes.",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
