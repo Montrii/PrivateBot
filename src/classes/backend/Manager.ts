@@ -23,4 +23,9 @@ export abstract class Manager {
     abstract reportUnsuccessfulTask(task: Task, ...args: any[]) : void
 
     abstract runAllTasks(): void;
+
+
+    async sleep(ms: number) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
 }

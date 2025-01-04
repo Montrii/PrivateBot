@@ -55,7 +55,7 @@ export class EbayManager extends Manager {
                 console.log("[TASK]: No bid is about to end.")
             }
             else {
-                DiscordUpdater.getInstance().addBidExpiringOffers(args[0]).then(() => {
+               DiscordUpdater.getInstance().addBidExpiringOffers(args[0]).then(() => {
                     console.log("[TASK]: Updated Discord with bid expiring offers.")
                 }).catch((error: any) => {
                     ErrorManager.showError("[TASK]: Error occurred while updating Discord with bid expiring offers: ", error);
@@ -95,7 +95,7 @@ export class EbayManager extends Manager {
         }).then((response: any) => {
             console.log(response.data.message);
         }).catch((error) => {
-            ErrorManager.showError("[TASK]: Error occurred while saving offers to server: ", error);
+            ErrorManager.showError("[TASK]: Error occurred while saving offers to servesdasadr: ", error);
         })
     }
 

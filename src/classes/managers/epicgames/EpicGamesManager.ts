@@ -17,6 +17,10 @@ export class EpicGamesManager extends Manager {
 
     reportSuccessfulTask(task: Task, ...args: any[]): void {
         console.log("[TASK]: " + task.name + " successfully completed!")
+
+        if(task === this.epicGamesSearchTask) {
+            console.log("Updating Discord with new Epic Games offers.")
+        }
     }
 
     reportUnsuccessfulTask(task: Task, ...args: any[]): void {
