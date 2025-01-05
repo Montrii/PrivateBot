@@ -80,6 +80,25 @@ export class Localisation {
             genshinForWhichRegion: "For region: ",
             genshinDiscovered: "Discovered: ",
 
+
+            epicGamesTitle: "Game: ",
+            epicGamesOpen: "Get",
+            epicGamesDescription: "This game is free or discounted on Epic Games for a limited time!",
+            epicGamesDescriptionBundle: "This bundle is free or discounted on Epic Games for a limited time!",
+            epicGamesDescriptionDLC: "This DLC is free or discounted on Epic Games for a limited time!",
+
+            epicGamesType: "Type: ",
+            epicGamesGameDescription: "Game Description: ",
+            epicGamesDeveloper: "Developer: ",
+            epicGamesReleaseDate: "Release Date: ",
+            epicGamesOfferStartDate: "Offer Start Date: ",
+            epicGamesOfferEndDate: "Offer End Date: ",
+
+            epicGamesOriginalPrice: "Original Price: ",
+            epicGamesDiscountPrice: "Discount Price: ",
+            epicGamesNotAvailableYet: "Not available yet",
+
+
         };
 
         this.de = {
@@ -155,6 +174,23 @@ export class Localisation {
 
             genshinForWhichRegion: "Für Region: ",
             genshinDiscovered: "Entdeckt: ",
+
+
+            epicGamesTitle: "Spiel: ",
+            epicGamesOpen: "Holen",
+            epicGamesDescription: "Dieses Spiel ist für eine begrenzte Zeit auf Epic Games kostenlos oder rabattiert!",
+            epicGamesDescriptionBundle: "Dieses Bundle ist für eine begrenzte Zeit auf Epic Games kostenlos oder rabattiert!",
+            epicGamesDescriptionDLC: "Dieses DLC ist für eine begrenzte Zeit auf Epic Games kostenlos oder rabattiert!",
+
+            epicGamesType: "Typ: ",
+            epicGamesGameDescription: "Spielbeschreibung: ",
+            epicGamesDeveloper: "Entwickler: ",
+            epicGamesReleaseDate: "Veröffentlichungsdatum: ",
+            epicGamesOfferStartDate: "Angebot Startdatum: ",
+            epicGamesOfferEndDate: "Angebot Enddatum: ",
+            epicGamesOriginalPrice: "Originalpreis: ",
+            epicGamesDiscountPrice: "Rabattpreis: ",
+            epicGamesNotAvailableYet: "Noch nicht verfügbar",
         };
 
         this._currentLanguage = "en";

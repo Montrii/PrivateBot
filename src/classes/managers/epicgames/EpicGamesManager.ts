@@ -3,6 +3,7 @@
 import {Manager} from "../../backend/Manager";
 import {Task} from "../../tasks/Task";
 import {EpicGamesSearcherTask} from "../../tasks/EpicGamesSeacherTask";
+import {DiscordUpdater} from "../discord/DiscordUpdater";
 
 export class EpicGamesManager extends Manager {
 
@@ -19,7 +20,8 @@ export class EpicGamesManager extends Manager {
         console.log("[TASK]: " + task.name + " successfully completed!")
 
         if(task === this.epicGamesSearchTask) {
-            console.log("Updating Discord with new Epic Games offers.")
+            console.log("[DISCORD]: Updating Discord with new Epic Games offers.")
+            DiscordUpdater.getInstance().updateEpicGames(args[0]);
         }
     }
 

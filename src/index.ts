@@ -49,10 +49,10 @@ client.on("ready", async (user) => {
 
 
 
-    await new GenshinManager().runAllTasks()
+    //await new GenshinManager().runAllTasks()
     await new SteamManager().runAllTasks()
     await new EpicGamesManager().runAllTasks()
-    await new EbayManager().runAllTasks()
+    //await new EbayManager().runAllTasks()
 
 
 })

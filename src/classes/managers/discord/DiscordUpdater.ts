@@ -11,6 +11,9 @@ import {EbaySettings} from "../ebay/EbaySettings";
 import {ErrorManager} from "../../backend/ErrorManager";
 import {GenshinCode} from "../genshin/GenshinCode";
 import {GenshinSettings} from "../genshin/GenshinSettings";
+import {EpicGame} from "../epicgames/EpicGame";
+import {EpicSettings} from "../epicgames/EpicSettings";
+import {EpicGameOfferType} from "../epicgames/EpicGameOfferType";
 
 // Handles updating any discord bot messages send by the bot.
 
@@ -134,6 +137,205 @@ export class DiscordUpdater {
         }
         catch(error) {
             ErrorManager.showError("Error while attempting to add Genshin code (" + code.getCode() + ") to channel", error)
+        }
+    }
+
+
+    public async buildEpicGamesEmbed(guild: any, epicSettings: any, offer: EpicGame, localisation: Localisation) {
+        const actionRow = new ActionRowBuilder()
+
+        // Create the embed
+        const gameEmbed = new EmbedBuilder()
+            .setTitle(localisation.get("epicGamesTitle") + offer.title!)  // Set the truncated title or normal title
+            .setThumbnail(offer.image!)
+            .setURL(offer.link!)
+
+
+
+
+        // check if offer is ADDON, BASEGAME OR BUNDLE
+        if(offer.offerType === EpicGameOfferType.ADDON) {
+            gameEmbed.setDescription(localisation.get("epicGamesDescriptionDLC") as string)
+            gameEmbed.setColor("#FFA500")
+        }
+        else if(offer.offerType === EpicGameOfferType.BUNDLE) {
+            gameEmbed.setDescription(localisation.get("epicGamesDescriptionBundle") as string)
+            gameEmbed.setColor("#009A00")
+        }
+        else {
+            gameEmbed.setDescription(localisation.get("epicGamesDescription") as string)
+            gameEmbed.setColor("#0070FF")
+        }
+
+        gameEmbed.addFields(({ name: localisation.get("epicGamesType"), value: offer.offerType!, inline: true } as any))
+        gameEmbed.addFields(({name: "App-ID", value: offer.appId, inline: false} as any))
+
+        gameEmbed.addFields(({ name: localisation.get("epicGamesGameDescription"), value: offer.description!, inline: false } as any))
+
+        gameEmbed.addFields(({ name: localisation.get("epicGamesDeveloper"), value: offer.developer!, inline: true } as any))
+        gameEmbed.addFields(({ name: localisation.get("epicGamesReleaseDate"), value: offer.releaseDate?.toLocaleString(guild.preferredLocale), inline: false } as any))
+
+
+
+        // Create the button for the embed
+        const addButton = new ButtonBuilder()
+            .setLabel(localisation.get("epicGamesOpen"))  // Set the button label
+            .setStyle(ButtonStyle.Link)
+            .setURL(offer.link!)
+
+
+
+
+        // Check if offer is in the future.
+        // @ts-ignore
+        if ((offer.releaseDate! > new Date()) || (new Date(offer.promos.startDate!) > new Date())) {
+            addButton.setDisabled(true)
+            addButton.setLabel(localisation.get("epicGamesNotAvailableYet") as string)
+        }
+
+        // @ts-ignore
+        gameEmbed.addFields(({ name: localisation.get("epicGamesOfferStartDate"), value: new Date(offer.promos.startDate).toLocaleString(guild.preferredLocale), inline: true } as any))
+
+        // @ts-ignore
+        gameEmbed.addFields(({ name: localisation.get("epicGamesOfferEndDate"), value: new Date(offer.promos.endDate).toLocaleString(guild.preferredLocale), inline: true } as any))
+
+
+        gameEmbed.addFields(({name:  localisation.get("epicGamesOriginalPrice"), value: offer.originalPrice, inline: false} as any))
+
+        gameEmbed.addFields(({name:  localisation.get("epicGamesDiscountPrice"), value: "**" + offer.discountPrice + "**", inline: true} as any))
+
+        // Add the button to the action row
+        actionRow.addComponents(addButton);
+        return { embeds: [gameEmbed], components: [actionRow] };
+    }
+
+    public async addEpicGamesOfferToChannel(guild: any, epicSettings: any, offer: EpicGame, localisation: Localisation) {
+        try {
+            const components = await this.buildEpicGamesEmbed(guild, epicSettings, offer, localisation)
+            await guild.channels.cache.find((channel: GuildBasedChannel) => channel.name === epicSettings.channelToSend).send(components)
+        }
+        catch(error) {
+            ErrorManager.showError("Error while attempting to add Epic offer (" + offer.title + ") to channel", error)
+        }
+    }
+
+
+    public async updateEpicGamesOfferToChannel(message: any, guild: any, epicSettings: any, offer: EpicGame, localisation: Localisation) {
+        try {
+            const components = await this.buildEpicGamesEmbed(guild, epicSettings, offer, localisation)
+            await message.edit(components)
+        }
+        catch(error) {
+            ErrorManager.showError("Error while attempting to add Epic offer (" + offer.title + ") to channel", error)
+        }
+    }
+
+    public async updateEpicGames(offers: EpicGame[]) {
+        DiscordUpdater.isAlreadyRunningDiscordJob = true;
+
+        const guildInformer = GuildInformer.getInstance();
+        const epicSettings = EpicSettings.getEpicGameDiscordEmbedSettigns();
+        const localisation = new Localisation();
+
+
+        // Remove duplicate offers (based on title)
+        const uniqueOffers = Array.from(new Map(offers.map((offer) => [offer.title, offer])).values());
+
+        // Sort offers in descending order based on the offerCreated ISO string
+        // @ts-ignore
+        uniqueOffers.sort((a, b) => new Date(b.promos.startDate).getTime() - new Date(a.promos.startDate).getTime());
+
+        const guilds = await guildInformer.getGuildsWithChannelName((epicSettings as any).channelToSend);
+
+        for (const guild of guilds) {
+            try {
+                localisation.setLanguage(guild.preferredLocale);
+
+                const messagesArray: any[] = [];
+                let lastMessageId: string | undefined = undefined;
+
+                // Fetch all messages in the channel
+                while (true) {
+                    // @ts-ignore
+                    const fetchedMessages = await guild.channelToSendTo.messages.fetch({
+                        limit: 100,
+                        ...(lastMessageId && { before: lastMessageId }),
+                    });
+
+                    if (fetchedMessages.size === 0) break;
+
+                    messagesArray.push(...fetchedMessages.values());
+                    lastMessageId = fetchedMessages.last()?.id;
+                }
+
+                console.log(`[DISCORD]: Fetched ${messagesArray.length} messages from channel.`);
+
+                // Track which titles are already processed
+                const processedTitles = new Set<string>();
+
+                // Loop through each unique offer
+                for (const offer of uniqueOffers) {
+
+                    const offerTitle = localisation.get("epicGamesTitle") + offer.title!.trim();
+
+                    // Find existing messages for this offer
+                    const existingMessages = messagesArray.filter((message: any) => {
+                        const messageContent = message.content.trim();
+                        const embedTitles = message.embeds.map((embed: any) => embed.title?.trim());
+
+                        // Check if the offer is present in the message (using title or embed)
+                        return embedTitles.some((embedTitle: any) => embedTitle && embedTitle.toLowerCase().includes(offerTitle.toLowerCase())) ||
+                            messageContent.toLowerCase().includes(offerTitle.toLowerCase());
+                    });
+
+                    // Keep only one message for the offer, remove duplicates
+                    if (existingMessages.length > 1) {
+                        for (let i = 1; i < existingMessages.length; i++) {
+                            await existingMessages[i].delete();
+                            console.log(`[DISCORD]: Deleted duplicate message for Epic offer: ${offer.title}`);
+                        }
+                    }
+
+                    const existingMessage = existingMessages[0];
+
+                    // If the message already exists, update it
+                    if (existingMessage) {
+                        // @ts-ignore
+                        if (!processedTitles.has(offer.title)) {
+                            await this.updateEpicGamesOfferToChannel(existingMessage, guild, epicSettings, offer, localisation);
+                            console.log("[DISCORD]: Updated Epic offer: " + offer.title);
+                            // @ts-ignore
+                            processedTitles.add(offer.title);
+                        }
+                    } else {
+                        // If no message exists for this offer, create a new one
+                        // @ts-ignore
+                        if (!processedTitles.has(offer.title)) {
+                            await this.addEpicGamesOfferToChannel(guild, epicSettings, offer, localisation);
+                            console.log("[DISCORD]: Added new Epic offer: " + offer.title);
+                            // @ts-ignore
+                            processedTitles.add(offer.title);
+                        }
+                    }
+                }
+
+                // Delete any messages not associated with a current offer
+                for (const message of messagesArray) {
+                    const offerTitle = localisation.get("epicGamesTitle");
+                    const isOfferMessage = message.embeds.some((embed: any) => embed.title && embed.title.startsWith(offerTitle));
+
+                    if (isOfferMessage && !uniqueOffers.some((offer) => message.embeds[0]?.title?.trim() === (offerTitle + offer.title).trim())) {
+                        await message.delete();
+                        console.log(`[DISCORD]: Deleted obsolete Epic offer message: ${message.embeds[0]?.title}`);
+                    }
+                }
+                console.log("[DISCORD]: Finished updating Epic offers for Guild: " + guild.name);
+                DiscordUpdater.isAlreadyRunningDiscordJob = false;
+            } catch (error) {
+                // @ts-ignore
+                ErrorManager.showError("[DISCORD]: Error while updating Epic offers for guild: " + guild.name, error);
+                DiscordUpdater.isAlreadyRunningDiscordJob = false;
+            }
         }
     }
 
