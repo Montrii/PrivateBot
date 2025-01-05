@@ -10,6 +10,9 @@ The bot is designed to be run on a private server, it **does not** give you stan
 
 A description how to setup the bot's `.env` file can be found in its [example template](./.env.example).
 
+The bot is hosted on a private machine via Docker. The Dockerfile can be found [here](./Dockerfile).
+
+The repo also contains both `.bat` (Windows) and `.sh` (Linux) scripts to easily build and run the bot via Docker.
 
 ## Dependencies
 
@@ -27,9 +30,10 @@ A description how to setup the bot's `.env` file can be found in its [example te
 ### Topics
 
 - [x] Fetching Ebay offers based on search terms (API).
+- [x] Warning about soon to expire Ebay bids (5 minutes before).
 - [x] Searching current free games on the Steam platform (+ DLC check).
-- [x] Searching current free games on the Epic Games platform (WIP).
-- [x] Searching free Genshin Impact Promo Codes (WIP).
+- [x] Searching current free games on the Epic Games platform.
+- [x] Searching free Genshin Impact Promo Codes.
 
 
 
@@ -37,7 +41,7 @@ A description how to setup the bot's `.env` file can be found in its [example te
 
 > The bot utilizes a command handler, that registers commands as slash commands.
 
-- /view-tasks -> views all the Tasks registered within the bot and reports their status (Started, Failed, Completed).
+- /view-tasks -> views all the Tasks registered within the bot and reports their status (Started, Running, Failed, Completed).
 - /add-ebay-search -> adds a new search term to the Ebay search Task.
 - /delete-ebay-search -> removes a search term from the Ebay search Task.
 - /view-ebay-search -> views all the search terms registered within the Ebay search Task.
