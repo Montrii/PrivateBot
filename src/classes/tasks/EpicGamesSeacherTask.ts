@@ -12,6 +12,7 @@ import axios from "axios";
 import cheerio from "cheerio";
 import {HTMLInfo} from "../backend/HTMLInfo";
 import {ErrorManager} from "../backend/ErrorManager";
+import {EpicGameOfferType} from "../managers/epicgames/EpicGameOfferType";
 
 export class EpicGamesSearcherTask extends Task {
     manager: EpicGamesManager;
@@ -42,7 +43,7 @@ export class EpicGamesSearcherTask extends Task {
                 gamesArray.forEach((element: any) => {
 
 
-                    const thumbnail = element.keyImages.filter((image: any) => image.type === "Thumbnail")[0]?.url
+                    const thumbnail = element.keyImages.filter((image: any) => image.type === "Thumbnail" || image.type.includes("DieselStore"))[0]?.url
 
                     // stores any upcoming promos for the game
                     let promos: any[] = [];
@@ -81,24 +82,33 @@ export class EpicGamesSearcherTask extends Task {
                     // Determing what slug to use for the game
                     let slug: string;
 
-                    if (element.offerMappings?.length) {
+                    if (element.offerMappings?.length > 0) {
                         // @ts-ignore
                         const offerMappingWithOfferPageType = element.offerMappings.find(mapping => mapping.pageType === 'offer');
                         slug = offerMappingWithOfferPageType ? offerMappingWithOfferPageType.pageSlug : element.offerMappings[0].pageSlug;
-                    } else if (element.catalogNs.mappings?.length) {
+                    } else if (element.catalogNs.mappings?.length > 0) {
                         slug = element.catalogNs.mappings[0].pageSlug;
                     } else {
-                        slug = element.urlSlug || element.productSlug || "";
+                        slug = element.productSlug || element.urlSlug || "";
                     }
+
 
                     //gameInfoPromise.push(this.fetchEpicGamesLink(element.id))
                     // Add the game to the list
 
                     console.log("[TASK]: Found game: " + element.title)
 
-                    this.games.push(new EpicGame(element.id, element.urlSlug, element.title, element.description, new Date(element.effectiveDate), element.price.totalPrice.fmtPrice.originalPrice, element.price.totalPrice.currencyCode, element.offerType, thumbnail, "https://store.epicgames.com/en-US/p/" + slug, element.seller.name, freeNow, promos))
+                    let link = "https://store.epicgames.com/en-US/p/" + slug;
+                    if(element.offerType == EpicGameOfferType.BUNDLE) {
+                        link = "https://store.epicgames.com/en-US/bundles/" + slug;
+                    }
+
+                    let game = new EpicGame(element.id, element.urlSlug, element.title, element.description, new Date(element.effectiveDate), element.price.totalPrice.fmtPrice.originalPrice, element.price.totalPrice.fmtPrice.discountPrice, element.price.totalPrice.currencyCode, element.offerType, thumbnail, link, element.seller.name, freeNow, element.offerType, promos)
+
+                    this.games.push(game)
                 })
                 this.manager.reportSuccessfulTask(this, this.games);
+                this.games = [];
             }).catch((error) => {
                 ErrorManager.showError("[TASK]: " + this.name + " failed! Down below: ", error);
                 this.manager.reportUnsuccessfulTask(this, this.games);
