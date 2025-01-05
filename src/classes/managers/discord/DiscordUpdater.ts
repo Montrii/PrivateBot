@@ -126,7 +126,7 @@ export class DiscordUpdater {
 
         }
 
-        return { embeds: [gameEmbed], components: [actionRow] };
+        return { content: "@everyone", embeds: [gameEmbed], components: [actionRow] };
     }
 
     public async addGenshinCodeToChannel(guild: any, genshinSettings: GenshinSettings, code: GenshinCode, localisation: Localisation) {
@@ -346,48 +346,87 @@ export class DiscordUpdater {
         const genshinSettings = GenshinSettings.getDiscordSettings();
         const localisation = new Localisation();
 
-
+        // Extract valid code strings from the codes array
+        const validCodeStrings = codes.map((code) => code.getCode());
 
         // Loop through each guild that the bot is part of that has the channel name that the bot is supposed to send to.
         // @ts-ignore
-
-
         guildInformer.getGuildsWithChannelName(genshinSettings.channelToSend).forEach((guild: any) => {
             // Adjust the language of the bot to the preferred language of the guild.
             localisation.setLanguage(guild.preferredLocale);
 
-
-
-            // Fetch all messages in the channel and delete them.
+            // Fetch all messages in the channel
+            // Fetch all messages in the channel
             guild.channelToSendTo.messages.fetch({ limit: 100 })
                 .then((messages: any) => {
-                    return Promise.all(messages.map((message: any) => message.delete().catch(console.error)));
-                })
-                .then(() => {
-                    // Add new messages for each code in the `codes` array.
-                    codes.forEach((code) => {
-                        this.addGenshinCodeToChannel(guild, genshinSettings, code, localisation);
-                        console.log(
-                            `[DISCORD]: Adding message for code: ${code.getCode()} | guild: ${guild.name}`
-                        );
-                    });
-                })
-                .finally(() => {
-                    console.log(
-                        `[DISCORD]: Finished updating Genshin Code messages for Guild: ${guild.name}`
-                    );
-                    DiscordUpdater.isAlreadyRunningDiscordJob = false;
-                })
-                .catch((error: Error) => {
-                    ErrorManager.showError(
-                        `[DISCORD]: Error while updating Genshin Code for guild: ${guild.name}\nDown below:`,
-                        error
-                    );
-                    DiscordUpdater.isAlreadyRunningDiscordJob = false;
-                });
-        });
+                    const messagesToDelete = messages.filter((message: any) => {
+                        // Check if the message contains a valid code, in content or embeds
+                        const containsValidCode = validCodeStrings.some((code) => {
+                            if (message.content.includes(code)) return true;
+                            if (message.embeds?.length > 0) {
+                                return message.embeds.some((embed: any) => {
+                                    if (embed.title?.includes(code)) return true;
+                                    if (embed.fields) {
+                                        return embed.fields.some((field: any) => field.value.includes(code));
+                                    }
+                                    return false;
+                                });
+                            }
+                            return false;
+                        });
 
+                        return !containsValidCode; // Mark for deletion if code is invalid
+                    });
+
+                    const existingValidCodes = new Set(
+                        messages.filter((message: any) => {
+                            return validCodeStrings.some((code) => {
+                                if (message.content.includes(code)) return true;
+                                if (message.embeds?.length > 0) {
+                                    return message.embeds.some((embed: any) => {
+                                        if (embed.title?.includes(code)) return true;
+                                        if (embed.fields) {
+                                            return embed.fields.some((field: any) => field.value.includes(code));
+                                        }
+                                        return false;
+                                    });
+                                }
+                                return false;
+                            });
+                        }).map((message: any) => {
+                            return validCodeStrings.find((code) => {
+                                return message.content.includes(code) ||
+                                    message.embeds?.some((embed: any) =>
+                                        embed.title?.includes(code) ||
+                                        embed.fields?.some((field: any) => field.value.includes(code))
+                                    );
+                            });
+                        })
+                    );
+
+                    // Delete invalid messages
+                    const deletePromises = messagesToDelete.map((message: any) => {
+                        return message.delete().catch(console.error);
+                    });
+
+                    return Promise.all(deletePromises).then(() => existingValidCodes);
+                })
+                .then((existingValidCodes: Set<string>) => {
+                    // Post new codes not already in the channel
+                    codes.forEach((code) => {
+                        // @ts-ignore
+                        if (!existingValidCodes.has(code.getCode())) {
+                            this.addGenshinCodeToChannel(guild, genshinSettings, code, localisation);
+                            console.log(
+                                `[DISCORD]: Adding message for code: ${code.getCode()} | guild: ${guild.name}`
+                            );
+                        }
+                    });
+                });
+
+        });
     }
+
 
     public async updateSteamGames(games: SteamGame[]) {
 

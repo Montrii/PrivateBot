@@ -47,9 +47,6 @@ client.on("ready", async (user) => {
     // Registering all commands
     await CommandRegister.getInstance().setClient(client).registerCommands();
 
-
-
-    // All these work!
     await new GenshinManager().runAllTasks()
     await new SteamManager().runAllTasks()
     await new EpicGamesManager().runAllTasks()
