@@ -90,16 +90,23 @@ export class DiscordUpdater {
 
             code.getItems().forEach((item) =>
             {
-                let emojiName = item.replace("×", "").replace(/[0-9]/g, '').replace("'", "").replace(" ", "");
+                let emojiName = item.replace("×", "").replace(/[0-9]/g, '').replace("'", "").replace(/\s+/g, '').toLowerCase();
                 // @ts-ignore
-                let emoji = this.client.emojis.cache.find(emoji => emojiName.includes(emoji.name));
-                if (emoji !== undefined)
-                {
-                    gameEmbed.addFields({name: "Item", value: `${emoji} ${item}`, inline: true});
-                }
-                else
-                {
-                    gameEmbed.addFields({name: "Item", value: `${item}`, inline: true});
+                let emoji = this.client.emojis.cache.find(emoji => emoji.name.toLowerCase() === emojiName);
+
+                if (emoji) {
+                    let emojiString = emoji.toString();
+                    gameEmbed.addFields({
+                        name: "Item",
+                        value: `${emojiString} ${item}`,
+                        inline: true
+                    });
+                } else {
+                    gameEmbed.addFields({
+                        name: "Item",
+                        value: `${item}`,
+                        inline: true
+                    });
                 }
 
             })
@@ -152,9 +159,7 @@ export class DiscordUpdater {
             // Fetch all messages in the channel and delete them.
             guild.channelToSendTo.messages.fetch({ limit: 100 })
                 .then((messages: any) => {
-                    const botMessages = messages.filter((message: any) => message.author.id === this.user.id);
-
-                    return Promise.all(botMessages.map((message: any) => message.delete().catch(console.error)));
+                    return Promise.all(messages.map((message: any) => message.delete().catch(console.error)));
                 })
                 .then(() => {
                     // Add new messages for each code in the `codes` array.

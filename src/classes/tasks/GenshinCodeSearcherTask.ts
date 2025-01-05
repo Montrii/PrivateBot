@@ -67,8 +67,9 @@ export class GenshinCodeSearcherTask extends Task {
                     this.codes.push(genshinCode);
                 });
                 console.log("[GENSHIN] Loaded " + this.codes.length + " codes");
-
-                this.manager.reportSuccessfulTask(this, this.codes)
+                const codes = this.codes;
+                this.codes = []
+                this.manager.reportSuccessfulTask(this, codes)
             }).catch((error) => {
                 ErrorManager.showError("Error while running Genshin Code Task", error)
             })

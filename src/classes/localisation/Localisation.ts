@@ -153,6 +153,8 @@ export class Localisation {
             genshinSpecial: "Spezial",
             genshinSpecialDescription: "Dieser Code ist für eine begrenzte Zeit auf Genshin Impact verfügbar und ist besonders!",
 
+            genshinForWhichRegion: "Für Region: ",
+            genshinDiscovered: "Entdeckt: ",
         };
 
         this._currentLanguage = "en";
