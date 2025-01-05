@@ -393,84 +393,80 @@ export class DiscordUpdater {
 
         DiscordUpdater.isAlreadyRunningDiscordJob = true;
 
-
         const guildInformer = GuildInformer.getInstance();
         const steamSettings = SteamSettings.getSteamDiscordEmbedSettings();
         const localisation = new Localisation();
 
-        // Loop through each guild that the bot is part of that has the channel name that the bot is supposed to send to.
+
         // @ts-ignore
         guildInformer.getGuildsWithChannelName(steamSettings.channelToSend).forEach((guild: any) => {
-            // Adjust the language of the bot to the preferred language of the guild.
-            localisation.setLanguage(guild.preferredLocale)
+            localisation.setLanguage(guild.preferredLocale);
 
-            // Now we can scan of any messages we have sent and verify if we need to update them.
             guild.channelToSendTo.messages.fetch({limit: 100})
-
-                // Step: Find messages and filter out messages that are not from the bot.
                 .then((messages: any) => {
-
-                    // We filter out any messages that are not from the bot.
-                    // Checks if any messages from bot with embeds are found that contain the appId of the games.
-                    // We're only checking any messages are found.
                     const messagesFromThisModule = messages.filter((message: any) => {
-                        return message.author.id == this.user.id && message.embeds !== undefined || message.embeds !== null || messages.embeds.some((embed: any) => {
+                        return message.author.id === this.user.id && message.embeds.some((embed: any) => {
                             return embed.fields?.some((field: any) => {
-                                return games.some((game) => game.appId === field.value)
-                            })
-                        })
+                                return games.some((game) => game.appId === field.value);
+                            });
+                        });
                     });
 
-                    // We check if there are any messages from this module.
-                    // We return a promise to ensure that we can continue with the next step.
-                    return new Promise((resolve, reject) => {
-                        if(messagesFromThisModule.size > 0) {
-                            resolve(messagesFromThisModule)
-                        }
-                        else {
-                            resolve(null)
-                        }
-                    })
+                    const orphanedMessages = messages.filter((message: any) => {
+                        // A message is orphaned if NONE of its embed fields contain a valid appId.
+                        return message.author.id === this.user.id && message.embeds.some((embed: any) => {
+                            return embed.fields?.every((field: any) => {
+                                return !games.some((game) => game.appId === field.value);
+                            });
+                        });
+                    });
 
+                    return { messagesFromThisModule, orphanedMessages };
                 })
-                // Next step: determines if we need to update messages or not.
-                .then((messages: any) => {
-                    if(messages) {
+                .then(({ messagesFromThisModule, orphanedMessages }: any) => {
+                    // Deleting only orphaned messages that are NOT relevant anymore.
+                    orphanedMessages.forEach((message: any) => {
+                        message.delete()
+                            .then(() => console.log("[DISCORD]: Deleted orphaned message with ID: " + message.id + " from Guild: " + guild.name))
+                            .catch((error: Error) => console.error("[DISCORD]: Failed to delete orphaned message with ID: " + message.id, error));
+                    });
+
+                    if (messagesFromThisModule.size > 0) {
                         games.forEach((game) => {
-                            // We need to check here if the message containing this specific game is found.
-                            const gameMessage = messages.find((message: any) => {
+                            const gameMessage = messagesFromThisModule.find((message: any) => {
                                 return message.embeds.some((embed: any) => {
                                     return embed.fields.some((field: any) => {
-                                        return field.value === game.appId
-                                    })
-                                })
-                            })
-                            // If we did not find the current game, we need to add it.
+                                        return field.value === game.appId;
+                                    });
+                                });
+                            });
+
                             if (!gameMessage) {
-                                this.addSteamGameToChannel(guild, steamSettings, game, localisation)
-                                console.log("[DISCORD]: Adding message for game: " + game.title + "\n appId: " + game.appId + "| guild: " + guild.name)
+                                this.addSteamGameToChannel(guild, steamSettings, game, localisation);
+                                console.log("[DISCORD]: Adding message for game: " + game.title + "\n appId: " + game.appId + " | guild: " + guild.name);
+                            } else {
+                                this.updateSteamGameInChannel(gameMessage, guild, steamSettings, game, localisation);
+                                console.log("[DISCORD]: Updating message for game: " + game.title + "\n appId: " + game.appId + " | guild: " + guild.name);
                             }
-                        })
-                    }
-                    else {
+                        });
+                    } else {
                         games.forEach((game) => {
-                            this.addSteamGameToChannel(guild, steamSettings, game, localisation)
-                            console.log("[DISCORD]: Adding message for game: " + game.title + "\n appId: " + game.appId + "| guild: " + guild.name)
-                        })
+                            this.addSteamGameToChannel(guild, steamSettings, game, localisation);
+                            console.log("[DISCORD]: Adding message for game: " + game.title + "\n appId: " + game.appId + " | guild: " + guild.name);
+                        });
                     }
                 })
-                // Finally: Finish up the process.
                 .finally(() => {
-                    console.log("[DISCORD]: Finished updating Steam messages "  + "for Guild: " + guild.name);
+                    console.log("[DISCORD]: Finished updating Steam messages for Guild: " + guild.name);
                     DiscordUpdater.isAlreadyRunningDiscordJob = false;
                 })
-                // Error Handling
                 .catch((error: Error) => {
-                    ErrorManager.showError("[DISCORD]: Error while updating Steam messages for guild: " + guild.name + "\nDown below:", error)
+                    ErrorManager.showError("[DISCORD]: Error while updating Steam messages for guild: " + guild.name + "\nDown below:", error);
                     DiscordUpdater.isAlreadyRunningDiscordJob = false;
-                })
-        })
+                });
+        });
     }
+
 
     private async buildSteamGameEmbed(guild: any, steamSettings: any, game: SteamGame, localisation: Localisation) {
         let gameButton = new ButtonBuilder()
